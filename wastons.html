@@ -76,12 +76,6 @@
     .cart-item-name { font-size: 0.9rem; font-weight: 600; margin: 0; line-height: 1.2; }
     .cart-item-price { font-size: 0.85rem; color: var(--primary); margin: 3px 0 0 0; }
 
-    /* 🔍 PRODUCT DETAILS MODAL STYLING */
-    .product-detail-img { width: 100%; max-height: 250px; object-fit: contain; border-radius: 8px; margin-bottom: 15px; }
-    .product-detail-name { font-size: 1.2rem; margin: 0 0 10px 0; color: var(--primary); line-height: 1.3; }
-    .product-detail-desc { font-size: 0.95rem; color: #555; line-height: 1.6; margin-bottom: 20px; text-align: left; }
-    .product-detail-price { font-size: 1.3rem; font-weight: bold; color: var(--secondary); margin-bottom: 20px; }
-
     /* ✅ TOAST NOTIFICATION STYLING */
     #toast {
         visibility: hidden; min-width: 250px; background-color: var(--secondary); color: #fff;
@@ -237,16 +231,6 @@
                 <h3 data-en="Welcome Back" data-ar="مرحباً بعودتك">Welcome Back</h3>
                 <button class="close-btn" onclick="toggleModal('login-modal')">&times;</button>
             </div>
-            <div id="orders-modal" class="modal">
-        <div class="modal-content" style="max-height: 85vh; overflow-y: auto;">
-            <div class="modal-header">
-                <h3 data-en="My Orders" data-ar="طلباتي">My Orders</h3>
-                <button class="close-btn" onclick="toggleModal('orders-modal')">&times;</button>
-            </div>
-            <div id="user-orders-list" style="display: flex; flex-direction: column; gap: 15px;">
-                </div>
-        </div>
-    </div>
             <form onsubmit="handleLogin(event)">
                 <div class="form-group">
                     <label data-en="Phone Number" data-ar="رقم الهاتف">Phone Number</label>
@@ -310,13 +294,13 @@
         </div>
     </div>
 
-    <div id="product-modal" class="modal">
-        <div class="modal-content" style="max-height: 90vh; overflow-y: auto;">
+    <div id="orders-modal" class="modal">
+        <div class="modal-content" style="max-height: 85vh; overflow-y: auto;">
             <div class="modal-header">
-                <h3 data-en="Product Details" data-ar="تفاصيل المنتج">Product Details</h3>
-                <button class="close-btn" onclick="toggleModal('product-modal')">&times;</button>
+                <h3 data-en="My Orders" data-ar="طلباتي">My Orders</h3>
+                <button class="close-btn" onclick="toggleModal('orders-modal')">&times;</button>
             </div>
-            <div id="product-modal-body">
+            <div id="user-orders-list" style="display: flex; flex-direction: column; gap: 15px;">
                 </div>
         </div>
     </div>
@@ -389,7 +373,7 @@
                 const signOutText = currentLang === 'ar' ? 'تسجيل الخروج' : 'Sign Out';
                 const ordersText = currentLang === 'ar' ? 'طلباتي' : 'Orders';
                 
-                // Added the Orders button next to Sign Out
+                // 📦 THE "MY ORDERS" BUTTON HAS BEEN RESTORED HERE!
                 authContainer.innerHTML = `
                     <span class="user-greeting" style="margin-right: 8px;">${greeting}</span>
                     <button class="btn-header-auth" onclick="openMyOrders()">📦 ${ordersText}</button>
@@ -517,7 +501,7 @@
                 
                 grid.innerHTML += `
                     <div class="card">
-                        <div onclick="showProductDetails('${p._id || p.id}')" style="cursor: pointer;">
+                        <div>
                             <img src="${storeLogo}" style="height: 50px; object-fit: contain; margin: 0 auto 25px auto; display: block;" onerror="this.style.display='none'">
                             <img src="${p.image}" style="width: 100%; height: 180px; object-fit: contain; margin-bottom: 10px; border-radius: 8px;">
                             <h3>${p.name}</h3>
@@ -535,33 +519,6 @@
             });
             renderPaginationControls(totalPages);
             updateCartUI();
-        }
-
-        // 🔍 NEW: Function to show full product details
-        function showProductDetails(productId) {
-            const product = products.find(p => p._id === productId || p.id === productId);
-            if (!product) return;
-
-            const currencyToggle = document.getElementById('currency-toggle');
-            const currency = currencyToggle ? currencyToggle.value : 'USD';
-            const rate = RATES[currency] || 1;
-            
-            const converted = currency === 'USD' ? (product.priceUSD * rate).toFixed(2) : Math.round(product.priceUSD * rate).toLocaleString();
-            const symbol = currency === 'USD' ? '$' : 'ل.س';
-            const fallbackDesc = currentLang === 'ar' ? 'لا يوجد وصف متاح لهذا المنتج.' : 'No description available for this product.';
-            
-            const body = document.getElementById('product-modal-body');
-            body.innerHTML = `
-                <img src="${product.image}" class="product-detail-img" onerror="this.src='placeholder.png'">
-                <h2 class="product-detail-name">${product.name}</h2>
-                <p class="product-detail-price">${symbol} ${converted}</p>
-                <p class="product-detail-desc" dir="${currentLang === 'ar' ? 'rtl' : 'ltr'}">${product.description || fallbackDesc}</p>
-                <button class="btn-primary" onclick="addToCart('${product._id || product.id}'); toggleModal('product-modal');">
-                    ${currentLang === 'ar' ? 'أضف إلى السلة 🛒' : 'Add to Cart 🛒'}
-                </button>
-            `;
-            
-            toggleModal('product-modal');
         }
 
         function renderPaginationControls(totalPages) {
@@ -591,6 +548,7 @@
             if (!product) return;
 
             cart = cart.filter(item => item !== null);
+
             const existingItem = cart.find(item => (item._id || item.id) === productId);
 
             if (existingItem) {
@@ -673,56 +631,13 @@
             if (totalEl) totalEl.innerText = currency === 'USD' ? grandTotal.toFixed(2) : Math.round(grandTotal).toLocaleString();
             if (currEl) currEl.innerText = currency;
         }
-        async function openMyOrders() {
-            toggleModal('orders-modal');
-            const list = document.getElementById('user-orders-list');
-            list.innerHTML = `<p style="text-align:center;">${currentLang === 'ar' ? 'جاري التحميل...' : 'Loading orders...'}</p>`;
-            
-            try {
-                // This asks the server for orders matching the user's phone number
-                const response = await fetch(`${API_URL}/orders/phone/${currentUser.phone}`);
-                if (!response.ok) throw new Error("Could not fetch orders");
-                
-                const orders = await response.json();
-                list.innerHTML = '';
-                
-                if (orders.length === 0) {
-                    list.innerHTML = `<p style="text-align:center; color:#777;">${currentLang === 'ar' ? 'لا توجد طلبات سابقة.' : 'No previous orders found.'}</p>`;
-                    return;
-                }
-
-                orders.forEach(order => {
-                    // Set up the color for the status badge
-                    let statusColor = '#f39c12'; // Orange for Pending
-                    if (order.status === 'Accepted') statusColor = '#3498db'; // Blue
-                    if (order.status === 'On the Way') statusColor = '#9b59b6'; // Purple
-                    if (order.status === 'Delivered') statusColor = '#2ecc71'; // Green
-                    
-                    const statusText = order.status || 'Pending';
-                    const dateText = new Date(order.createdAt).toLocaleDateString();
-
-                    list.innerHTML += `
-                        <div style="border: 1px solid #eee; border-radius: 8px; padding: 15px; background: #fafafa;">
-                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                                <span style="font-weight: bold; color: var(--primary);">${dateText}</span>
-                                <span style="background: ${statusColor}; color: white; padding: 4px 10px; border-radius: 12px; font-size: 0.85rem; font-weight: bold;">
-                                    ${statusText}
-                                </span>
-                            </div>
-                            <p style="margin: 0; font-size: 0.95rem;">Total: <strong>${order.total.toLocaleString()} SYP</strong></p>
-                        </div>
-                    `;
-                });
-            } catch (error) {
-                console.error(error);
-                list.innerHTML = `<p style="text-align:center; color:red;">Error loading orders.</p>`;
-            }
-        }
 
         function changeQuantity(index, delta) {
             if (!cart[index]) return;
             cart[index].quantity = (cart[index].quantity || 1) + delta;
-            if (cart[index].quantity <= 0) { cart.splice(index, 1); }
+            if (cart[index].quantity <= 0) {
+                cart.splice(index, 1);
+            }
             localStorage.setItem('syriaCareCart', JSON.stringify(cart));
             updateCartUI();
         }
@@ -736,6 +651,52 @@
         function toggleModal(id) { 
             const m = document.getElementById(id); 
             if (m) m.style.display = m.style.display === 'flex' ? 'none' : 'flex'; 
+        }
+
+        // 📦 THE "MY ORDERS" FETCHING LOGIC IS RESTORED HERE!
+        async function openMyOrders() {
+            toggleModal('orders-modal');
+            const list = document.getElementById('user-orders-list');
+            list.innerHTML = `<p style="text-align:center;">${currentLang === 'ar' ? 'جاري التحميل...' : 'Loading orders...'}</p>`;
+            
+            try {
+                const response = await fetch(`${API_URL}/orders/phone/${currentUser.phone}`);
+                if (!response.ok) throw new Error("Could not fetch orders");
+                
+                const orders = await response.json();
+                list.innerHTML = '';
+                
+                if (orders.length === 0) {
+                    list.innerHTML = `<p style="text-align:center; color:#777;">${currentLang === 'ar' ? 'لا توجد طلبات سابقة.' : 'No previous orders found.'}</p>`;
+                    return;
+                }
+
+                orders.forEach(order => {
+                    let statusColor = '#f39c12'; // Orange for Pending
+                    if (order.status === 'Accepted') statusColor = '#3498db'; // Blue
+                    if (order.status === 'On the Way') statusColor = '#9b59b6'; // Purple
+                    if (order.status === 'Delivered') statusColor = '#2ecc71'; // Green
+                    if (order.status === 'Cancelled') statusColor = '#e74c3c'; // Red
+                    
+                    const statusText = order.status || 'Pending';
+                    const dateText = new Date(order.createdAt).toLocaleDateString();
+
+                    list.innerHTML += `
+                        <div style="border: 1px solid #eee; border-radius: 8px; padding: 15px; background: #fafafa; text-align: left;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                                <span style="font-weight: bold; color: var(--primary);">${dateText}</span>
+                                <span style="background: ${statusColor}; color: white; padding: 4px 10px; border-radius: 12px; font-size: 0.85rem; font-weight: bold;">
+                                    ${statusText}
+                                </span>
+                            </div>
+                            <p style="margin: 0; font-size: 0.95rem;">Total: <strong style="color: var(--primary);">${(order.total || 0).toLocaleString()} SYP</strong></p>
+                        </div>
+                    `;
+                });
+            } catch (error) {
+                console.error(error);
+                list.innerHTML = `<p style="text-align:center; color:red;">Error loading orders.</p>`;
+            }
         }
         
         fetchProductsFromCloud(); 
