@@ -131,7 +131,28 @@
     .page-btn:disabled { border-color: #ddd; color: #aaa; cursor: not-allowed; background: #f9f9f9; box-shadow: none; transform: none;}
     
     @media (max-width: 600px) {
-        header { padding: 0.8rem 3%; }
+        /* 📱 PRO MOBILE HEADER GRID */
+        header { flex-direction: column; padding: 15px 5%; gap: 15px; align-items: stretch; }
+        .logo { justify-content: center; width: 100%; margin: 0; }
+        
+        .controls { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%; }
+        
+        /* Search Box - Full Width */
+        .search-box { grid-column: span 2; width: 100%; justify-content: space-between; }
+        .search-box input { width: 100%; flex: 1; }
+        
+        /* Auth Controls - Full Width Container */
+        #auth-controls { grid-column: span 2; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; width: 100%; }
+        .user-greeting { width: 100%; text-align: center; font-weight: bold; margin: 0 0 5px 0; display: block; font-size: 1rem; color: var(--primary); }
+        .btn-header-auth { flex: 1; justify-content: center; font-size: 0.85rem; padding: 8px; height: auto; text-align: center; }
+        
+        /* Dropdowns - Side by Side */
+        .custom-dropdown, #currency-toggle { width: 100%; }
+        .selected-lang { justify-content: center; }
+        
+        /* Cart - Full Width */
+        .btn-cart { grid-column: span 2; width: 100%; justify-content: center; display: flex; align-items: center; padding: 10px; }
+
         .grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
         .container { padding: 1rem 3%; }
         .card { padding: 10px; }
@@ -148,7 +169,6 @@
             overflow: hidden;
         }
         
-        .user-greeting { font-size: 0.85rem; white-space: nowrap; }
         .card img { height: 110px !important; }
         .price-amount { font-size: 0.85rem; }
         .category-grid-visual { grid-template-columns: repeat(2, 1fr); gap: 10px; }
