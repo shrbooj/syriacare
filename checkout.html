@@ -39,7 +39,7 @@
 
     <header>
         <a href="wastons.html" class="logo">
-            <img src="http://localhost:5000/images/logo.jpg" alt="Logo" style="height: 40px; border-radius: 5px;" onerror="this.style.display='none'">
+            <img src="syriacare express.jfif" alt="Logo" style="height: 40px; border-radius: 5px;" onerror="this.style.display='none'">
             <div><span>SyriaCare</span><span>Express</span></div>
         </a>
         <select id="lang-toggle" class="lang-select" onchange="switchLanguage(this.value)">
@@ -91,6 +91,8 @@
     </div>
 
     <script>
+        // FIXED API URL
+        const API_URL = 'https://syriacare.onrender.com/api';
         let currentLang = localStorage.getItem('syriaCareLang') || 'en';
         let cart = JSON.parse(localStorage.getItem('syriaCareCart')) || [];
         let currentUser = JSON.parse(localStorage.getItem('syriaCareUser')) || null;
@@ -116,7 +118,6 @@
             }
         };
 
-        // NEW: SEND ORDER TO SERVER
         async function processCheckout(event) {
             event.preventDefault();
             const btn = document.getElementById('submit-btn');
@@ -136,18 +137,21 @@
             };
 
             try {
-                // Post data to the Mongo Database
-                await fetch('https://syriacare.onrender.com/api', {
+                // FIXED: Changed from localhost to the Render API_URL
+                const response = await fetch(`${API_URL}/orders`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(orderData)
                 });
 
+                if (!response.ok) throw new Error("Server Error");
+
                 document.getElementById('checkout-form-area').style.display = 'none';
                 document.getElementById('success-message').style.display = 'block';
                 localStorage.removeItem('syriaCareCart'); 
             } catch (error) {
-                alert(currentLang === 'ar' ? 'حدث خطأ. يرجى المحاولة مرة أخرى.' : 'Error connecting to server. Please try again.');
+                console.error("Order Error:", error);
+                alert(currentLang === 'ar' ? 'حدث خطأ في الاتصال بالخادم.' : 'Error connecting to the cloud server.');
                 btn.innerText = currentLang === 'ar' ? 'تأكيد وإتمام الطلب' : 'Confirm & Place Order';
                 btn.disabled = false;
             }
