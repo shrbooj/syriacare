@@ -108,17 +108,37 @@ button {
     .page-btn:hover:not(:disabled) { background: var(--primary); color: white; transform: translateY(-2px); box-shadow: 0 4px 8px rgba(74, 20, 140, 0.2);}
     .page-btn.active { background: var(--primary); color: white; box-shadow: 0 4px 8px rgba(74, 20, 140, 0.3);}
     .page-btn:disabled { border-color: #ddd; color: #aaa; cursor: not-allowed; background: #f9f9f9; box-shadow: none; transform: none;}
-
-    @media (max-width: 600px) {
+@media (max-width: 600px) {
         header { padding: 0.8rem 3%; }
         .grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
         .container { padding: 1rem 3%; }
         .card { padding: 10px; }
-        .card h3 { font-size: 0.8rem; height: 60px; line-height: 1.3; }
+        
+        /* 📱 FIXED MOBILE TITLE TEXT */
+        .card h3 { 
+            font-size: 0.85rem; 
+            line-height: 1.3; 
+            height: 55px; 
+            margin: 5px 0 10px 0;
+            display: -webkit-box;
+            -webkit-line-clamp: 3; /* Allows 3 lines before adding ... */
+            line-clamp: 3;         /* Standard property */
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        
+        /* Prevents the greeting name from stacking weirdly */
+        .user-greeting {
+            font-size: 0.85rem;
+            white-space: nowrap; 
+        }
+
         .card img { height: 110px !important; }
         .price-amount { font-size: 0.85rem; }
         .category-grid-visual { grid-template-columns: repeat(2, 1fr); gap: 10px; }
         .cat-card img { height: 110px; }
+        
+        /* Prevents iPhone/Safari from zooming in on text fields */
         input, select, textarea { font-size: 16px !important; }
     }
 </style>
