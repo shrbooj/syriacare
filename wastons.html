@@ -8,9 +8,9 @@
     :root { --primary: #4a148c; --secondary: #009688; --bg: #f8f9fa; --text: #333; }
     body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; background-color: var(--bg); color: var(--text); transition: 0.3s; }
     /* Disables the annoying double-tap to zoom on all buttons */
-button {
-    touch-action: manipulation;
-}
+    button {
+        touch-action: manipulation;
+    }
    
     header { background-color: white; padding: 1rem 5%; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 1000; box-shadow: 0 2px 10px rgba(0,0,0,0.08); flex-wrap: wrap; gap: 15px;}
     .logo { font-size: 1.5rem; font-weight: bold; text-decoration: none; display: flex; align-items: center; gap: 12px; }
@@ -53,8 +53,7 @@ button {
     .card { background: white; border-radius: 12px; padding: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.06); text-align: center; display: flex; flex-direction: column; justify-content: space-between; border: 1px solid #eee; transition: 0.3s;}
     .card:hover { transform: translateY(-5px); box-shadow: 0 8px 20px rgba(0,0,0,0.1); }
     
-    /* Replace your existing .card h3 block with this */
-.card h3 { 
+    .card h3 { 
         font-size: 1rem; 
         height: 90px; 
         overflow: hidden; 
@@ -66,7 +65,6 @@ button {
         -webkit-box-orient: vertical;
     }
 
-
     .price-box { display: flex; border: 1px solid #f0e6f7; border-radius: 8px; margin-top: 10px; overflow: hidden; height: 40px; }
     .price-amount { flex: 1; display: flex; align-items: center; justify-content: center; background: #faf5ff; color: var(--primary); font-weight: bold; }
     .price-add-btn { background: var(--primary); color: white; border: none; width: 40px; font-size: 1.5rem; cursor: pointer; }
@@ -77,6 +75,12 @@ button {
     .cart-item-info { flex: 1; }
     .cart-item-name { font-size: 0.9rem; font-weight: 600; margin: 0; line-height: 1.2; }
     .cart-item-price { font-size: 0.85rem; color: var(--primary); margin: 3px 0 0 0; }
+
+    /* 🔍 PRODUCT DETAILS MODAL STYLING */
+    .product-detail-img { width: 100%; max-height: 250px; object-fit: contain; border-radius: 8px; margin-bottom: 15px; }
+    .product-detail-name { font-size: 1.2rem; margin: 0 0 10px 0; color: var(--primary); line-height: 1.3; }
+    .product-detail-desc { font-size: 0.95rem; color: #555; line-height: 1.6; margin-bottom: 20px; text-align: left; }
+    .product-detail-price { font-size: 1.3rem; font-weight: bold; color: var(--secondary); margin-bottom: 20px; }
 
     /* ✅ TOAST NOTIFICATION STYLING */
     #toast {
@@ -108,7 +112,8 @@ button {
     .page-btn:hover:not(:disabled) { background: var(--primary); color: white; transform: translateY(-2px); box-shadow: 0 4px 8px rgba(74, 20, 140, 0.2);}
     .page-btn.active { background: var(--primary); color: white; box-shadow: 0 4px 8px rgba(74, 20, 140, 0.3);}
     .page-btn:disabled { border-color: #ddd; color: #aaa; cursor: not-allowed; background: #f9f9f9; box-shadow: none; transform: none;}
-@media (max-width: 600px) {
+    
+    @media (max-width: 600px) {
         header { padding: 0.8rem 3%; }
         .grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
         .container { padding: 1rem 3%; }
@@ -121,27 +126,20 @@ button {
             height: 55px; 
             margin: 5px 0 10px 0;
             display: -webkit-box;
-            -webkit-line-clamp: 3; /* Allows 3 lines before adding ... */
-            line-clamp: 3;         /* Standard property */
+            -webkit-line-clamp: 3; 
+            line-clamp: 3;         
             -webkit-box-orient: vertical;
             overflow: hidden;
         }
         
-        /* Prevents the greeting name from stacking weirdly */
-        .user-greeting {
-            font-size: 0.85rem;
-            white-space: nowrap; 
-        }
-
+        .user-greeting { font-size: 0.85rem; white-space: nowrap; }
         .card img { height: 110px !important; }
         .price-amount { font-size: 0.85rem; }
         .category-grid-visual { grid-template-columns: repeat(2, 1fr); gap: 10px; }
         .cat-card img { height: 110px; }
-        
-        /* Prevents iPhone/Safari from zooming in on text fields */
         input, select, textarea { font-size: 16px !important; }
     }
-</style>
+    </style>
 </head>
 <body>
 
@@ -299,6 +297,17 @@ button {
                 <span data-en="Total:" data-ar="المجموع:">Total:</span> <span id="cart-total" style="color: var(--primary);">0</span> <span id="cart-currency" style="color: var(--primary);">USD</span>
             </div>
             <button class="btn-primary" onclick="window.location.href='checkout.html'" data-en="Proceed to Checkout" data-ar="إتمام عملية الدفع">Proceed to Checkout</button>
+        </div>
+    </div>
+
+    <div id="product-modal" class="modal">
+        <div class="modal-content" style="max-height: 90vh; overflow-y: auto;">
+            <div class="modal-header">
+                <h3 data-en="Product Details" data-ar="تفاصيل المنتج">Product Details</h3>
+                <button class="close-btn" onclick="toggleModal('product-modal')">&times;</button>
+            </div>
+            <div id="product-modal-body">
+                </div>
         </div>
     </div>
 
@@ -494,7 +503,7 @@ button {
                 
                 grid.innerHTML += `
                     <div class="card">
-                        <div>
+                        <div onclick="showProductDetails('${p._id || p.id}')" style="cursor: pointer;">
                             <img src="${storeLogo}" style="height: 50px; object-fit: contain; margin: 0 auto 25px auto; display: block;" onerror="this.style.display='none'">
                             <img src="${p.image}" style="width: 100%; height: 180px; object-fit: contain; margin-bottom: 10px; border-radius: 8px;">
                             <h3>${p.name}</h3>
@@ -512,6 +521,33 @@ button {
             });
             renderPaginationControls(totalPages);
             updateCartUI();
+        }
+
+        // 🔍 NEW: Function to show full product details
+        function showProductDetails(productId) {
+            const product = products.find(p => p._id === productId || p.id === productId);
+            if (!product) return;
+
+            const currencyToggle = document.getElementById('currency-toggle');
+            const currency = currencyToggle ? currencyToggle.value : 'USD';
+            const rate = RATES[currency] || 1;
+            
+            const converted = currency === 'USD' ? (product.priceUSD * rate).toFixed(2) : Math.round(product.priceUSD * rate).toLocaleString();
+            const symbol = currency === 'USD' ? '$' : 'ل.س';
+            const fallbackDesc = currentLang === 'ar' ? 'لا يوجد وصف متاح لهذا المنتج.' : 'No description available for this product.';
+            
+            const body = document.getElementById('product-modal-body');
+            body.innerHTML = `
+                <img src="${product.image}" class="product-detail-img" onerror="this.src='placeholder.png'">
+                <h2 class="product-detail-name">${product.name}</h2>
+                <p class="product-detail-price">${symbol} ${converted}</p>
+                <p class="product-detail-desc" dir="${currentLang === 'ar' ? 'rtl' : 'ltr'}">${product.description || fallbackDesc}</p>
+                <button class="btn-primary" onclick="addToCart('${product._id || product.id}'); toggleModal('product-modal');">
+                    ${currentLang === 'ar' ? 'أضف إلى السلة 🛒' : 'Add to Cart 🛒'}
+                </button>
+            `;
+            
+            toggleModal('product-modal');
         }
 
         function renderPaginationControls(totalPages) {
@@ -540,9 +576,7 @@ button {
             const product = products.find(p => p._id === productId || p.id === productId);
             if (!product) return;
 
-            // Clean array of nulls safely
             cart = cart.filter(item => item !== null);
-
             const existingItem = cart.find(item => (item._id || item.id) === productId);
 
             if (existingItem) {
@@ -563,83 +597,76 @@ button {
         }
 
         function updateCartUI() {
-        const list = document.getElementById('cart-items');
-        const currencyToggle = document.getElementById('currency-toggle');
-        const currency = currencyToggle ? currencyToggle.value : 'USD';
-        const rate = RATES[currency] || 1;
-        
-        let totalItemCount = cart.reduce((acc, item) => {
-            if (!item) return acc;
-            return acc + (item.quantity || 1);
-        }, 0);
-        
-        const countEl = document.getElementById('cart-count');
-        if (countEl) countEl.innerText = totalItemCount;
-        
-        if (list) list.innerHTML = '';
-        let grandTotal = 0;
-        
-        if (cart.length === 0) {
-            if (list) list.innerHTML = `<p style="text-align:center; color:#777; padding:20px;">${currentLang === 'ar' ? 'سلتك فارغة' : 'Your cart is empty'}</p>`;
-        } else {
-            cart.forEach((item, index) => {
-                if (!item) return; 
-                const qty = item.quantity || 1;
-                const unitPrice = (item.priceUSD * rate);
-                const lineTotal = unitPrice * qty;
-                grandTotal += lineTotal;
-                
-                const unitPriceText = currency === 'USD' ? `$${unitPrice.toFixed(2)}` : `${Math.round(unitPrice).toLocaleString()} ل.س`;
-                const lineTotalText = currency === 'USD' ? `$${lineTotal.toFixed(2)}` : `${Math.round(lineTotal).toLocaleString()} ل.س`;
-                
-                const unitLabel = currentLang === 'ar' ? 'سعر الوحدة' : 'Unit Price';
+            const list = document.getElementById('cart-items');
+            const currencyToggle = document.getElementById('currency-toggle');
+            const currency = currencyToggle ? currencyToggle.value : 'USD';
+            const rate = RATES[currency] || 1;
+            
+            let totalItemCount = cart.reduce((acc, item) => {
+                if (!item) return acc;
+                return acc + (item.quantity || 1);
+            }, 0);
+            
+            const countEl = document.getElementById('cart-count');
+            if (countEl) countEl.innerText = totalItemCount;
+            
+            if (list) list.innerHTML = '';
+            let grandTotal = 0;
+            
+            if (cart.length === 0) {
+                if (list) list.innerHTML = `<p style="text-align:center; color:#777; padding:20px;">${currentLang === 'ar' ? 'سلتك فارغة' : 'Your cart is empty'}</p>`;
+            } else {
+                cart.forEach((item, index) => {
+                    if (!item) return; 
+                    const qty = item.quantity || 1;
+                    const unitPrice = (item.priceUSD * rate);
+                    const lineTotal = unitPrice * qty;
+                    grandTotal += lineTotal;
+                    
+                    const unitPriceText = currency === 'USD' ? `$${unitPrice.toFixed(2)}` : `${Math.round(unitPrice).toLocaleString()} ل.س`;
+                    const lineTotalText = currency === 'USD' ? `$${lineTotal.toFixed(2)}` : `${Math.round(lineTotal).toLocaleString()} ل.س`;
+                    
+                    const unitLabel = currentLang === 'ar' ? 'سعر الوحدة' : 'Unit Price';
 
-                if (list) list.innerHTML += `
-                    <div class="cart-item" style="align-items: flex-start;">
-                        <img src="${item.image}" alt="${item.name}" onerror="this.src='placeholder.png'">
-                        <div class="cart-item-info" style="flex: 1; margin-right: 10px;">
-                            <p class="cart-item-name" style="margin-bottom: 8px;">${item.name}</p>
-                            
-                            <div style="display: flex; justify-content: space-between; align-items: center;">
-                                <div style="display: flex; align-items: center; background: #f4edf9; border-radius: 6px; border: 1px solid #eaddf4; overflow: hidden;">
-                                    <button onclick="changeQuantity(${index}, -1)" style="background:none; border:none; color: var(--primary); padding: 4px 10px; cursor: pointer; font-weight: bold; font-size: 1.1rem;">-</button>
-                                    <span style="color: var(--primary); padding: 4px 8px; font-size: 0.9rem; font-weight: bold; border-left: 1px solid #eaddf4; border-right: 1px solid #eaddf4;">
-                                        ${qty}
-                                    </span>
-                                    <button onclick="changeQuantity(${index}, 1)" style="background:none; border:none; color: var(--primary); padding: 4px 10px; cursor: pointer; font-weight: bold; font-size: 1.1rem;">+</button>
-                                </div>
+                    if (list) list.innerHTML += `
+                        <div class="cart-item" style="align-items: flex-start;">
+                            <img src="${item.image}" alt="${item.name}" onerror="this.src='placeholder.png'">
+                            <div class="cart-item-info" style="flex: 1; margin-right: 10px;">
+                                <p class="cart-item-name" style="margin-bottom: 8px;">${item.name}</p>
                                 
-                                <span style="font-size: 0.95rem; font-weight: bold; color: #222;">
-                                    ${lineTotalText}
-                                </span>
+                                <div style="display: flex; justify-content: space-between; align-items: center;">
+                                    <div style="display: flex; align-items: center; background: #f4edf9; border-radius: 6px; border: 1px solid #eaddf4; overflow: hidden;">
+                                        <button onclick="changeQuantity(${index}, -1)" style="background:none; border:none; color: var(--primary); padding: 4px 10px; cursor: pointer; font-weight: bold; font-size: 1.1rem;">-</button>
+                                        <span style="color: var(--primary); padding: 4px 8px; font-size: 0.9rem; font-weight: bold; border-left: 1px solid #eaddf4; border-right: 1px solid #eaddf4;">
+                                            ${qty}
+                                        </span>
+                                        <button onclick="changeQuantity(${index}, 1)" style="background:none; border:none; color: var(--primary); padding: 4px 10px; cursor: pointer; font-weight: bold; font-size: 1.1rem;">+</button>
+                                    </div>
+                                    
+                                    <span style="font-size: 0.95rem; font-weight: bold; color: #222;">
+                                        ${lineTotalText}
+                                    </span>
+                                </div>
+                                <p style="font-size: 0.75rem; color: #888; margin: 4px 0 0 0;">${unitLabel}: ${unitPriceText}</p>
                             </div>
-                            <p style="font-size: 0.75rem; color: #888; margin: 4px 0 0 0;">${unitLabel}: ${unitPriceText}</p>
-                        </div>
-                        <button onclick="removeFromCart(${index})" style="background:none; border:none; color:#e74c3c; cursor:pointer; font-size:1.4rem; padding: 0 5px; height: fit-content;">&times;</button>
-                    </div>`;
-            });
+                            <button onclick="removeFromCart(${index})" style="background:none; border:none; color:#e74c3c; cursor:pointer; font-size:1.4rem; padding: 0 5px; height: fit-content;">&times;</button>
+                        </div>`;
+                });
+            }
+            
+            const totalEl = document.getElementById('cart-total');
+            const currEl = document.getElementById('cart-currency');
+            if (totalEl) totalEl.innerText = currency === 'USD' ? grandTotal.toFixed(2) : Math.round(grandTotal).toLocaleString();
+            if (currEl) currEl.innerText = currency;
         }
-        
-        const totalEl = document.getElementById('cart-total');
-        const currEl = document.getElementById('cart-currency');
-        if (totalEl) totalEl.innerText = currency === 'USD' ? grandTotal.toFixed(2) : Math.round(grandTotal).toLocaleString();
-        if (currEl) currEl.innerText = currency;
-    }
-    function changeQuantity(index, delta) {
-        if (!cart[index]) return;
-        
-        // Add or subtract the amount (delta is either +1 or -1)
-        cart[index].quantity = (cart[index].quantity || 1) + delta;
-        
-        // If the quantity drops to zero (or below), remove the item entirely
-        if (cart[index].quantity <= 0) {
-            cart.splice(index, 1);
+
+        function changeQuantity(index, delta) {
+            if (!cart[index]) return;
+            cart[index].quantity = (cart[index].quantity || 1) + delta;
+            if (cart[index].quantity <= 0) { cart.splice(index, 1); }
+            localStorage.setItem('syriaCareCart', JSON.stringify(cart));
+            updateCartUI();
         }
-        
-        // Save the updated cart and refresh the screen
-        localStorage.setItem('syriaCareCart', JSON.stringify(cart));
-        updateCartUI();
-    }
 
         function removeFromCart(index) {
             cart.splice(index, 1);
