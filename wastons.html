@@ -55,13 +55,13 @@
     
     .card h3 { 
         font-size: 1rem; 
-        height: 90px; 
+        height: 60px; 
         overflow: hidden; 
         margin: 10px 0;
         line-height: 1.3;
         display: -webkit-box;
         -webkit-line-clamp: 2; 
-        line-clamp: 3;         
+        line-clamp: 2;         
         -webkit-box-orient: vertical;
     }
 
@@ -75,6 +75,29 @@
     .cart-item-info { flex: 1; }
     .cart-item-name { font-size: 0.9rem; font-weight: 600; margin: 0; line-height: 1.2; }
     .cart-item-price { font-size: 0.85rem; color: var(--primary); margin: 3px 0 0 0; }
+    
+    /* 📄 BUTTONS & INLINE BOX */
+    .btn-details { background: transparent; color: var(--primary); border: 1px solid var(--primary); width: 100%; padding: 6px; font-weight: 600; border-radius: 6px; transition: 0.2s; margin-bottom: 10px; cursor: pointer; font-size: 0.85rem; }
+    .btn-details:hover { background: rgba(74, 20, 140, 0.08); }
+    
+    .product-inline-desc { 
+        display: none; 
+        background: #f4edf9; 
+        padding: 15px; 
+        border-radius: 8px; 
+        font-size: 0.95rem; 
+        color: #444; 
+        text-align: start; 
+        border: 1px solid #eaddf4; 
+        line-height: 1.6; 
+        animation: fadeIn 0.3s ease-in-out;
+    }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* 🔍 PRODUCT DETAILS MODAL STYLING */
+    .product-detail-img { width: 100%; max-height: 250px; object-fit: contain; border-radius: 8px; margin-bottom: 15px; }
+    .product-detail-name { font-size: 1.2rem; margin: 0 0 10px 0; color: var(--primary); line-height: 1.3; }
+    .product-detail-price { font-size: 1.3rem; font-weight: bold; color: var(--secondary); margin-bottom: 15px; }
 
     /* ✅ TOAST NOTIFICATION STYLING */
     #toast {
@@ -113,7 +136,6 @@
         .container { padding: 1rem 3%; }
         .card { padding: 10px; }
         
-        /* 📱 FIXED MOBILE TITLE TEXT */
         .card h3 { 
             font-size: 0.85rem; 
             line-height: 1.3; 
@@ -301,6 +323,17 @@
                 <button class="close-btn" onclick="toggleModal('orders-modal')">&times;</button>
             </div>
             <div id="user-orders-list" style="display: flex; flex-direction: column; gap: 15px;">
+            </div>
+        </div>
+    </div>
+
+    <div id="product-modal" class="modal">
+        <div class="modal-content" style="max-height: 90vh; overflow-y: auto;">
+            <div class="modal-header">
+                <h3 data-en="Product Details" data-ar="تفاصيل المنتج">Product Details</h3>
+                <button class="close-btn" onclick="toggleModal('product-modal')">&times;</button>
+            </div>
+            <div id="product-modal-body">
                 </div>
         </div>
     </div>
@@ -373,7 +406,6 @@
                 const signOutText = currentLang === 'ar' ? 'تسجيل الخروج' : 'Sign Out';
                 const ordersText = currentLang === 'ar' ? 'طلباتي' : 'Orders';
                 
-                // 📦 THE "MY ORDERS" BUTTON HAS BEEN RESTORED HERE!
                 authContainer.innerHTML = `
                     <span class="user-greeting" style="margin-right: 8px;">${greeting}</span>
                     <button class="btn-header-auth" onclick="openMyOrders()">📦 ${ordersText}</button>
@@ -496,17 +528,20 @@
 
             paginatedProducts.forEach(p => {
                 const converted = currency === 'USD' ? (p.priceUSD * rate).toFixed(2) : Math.round(p.priceUSD * rate).toLocaleString();
-                const desc = p.description ? p.description : "";
                 const storeLogo = p.store === 'Gratis' ? gratisLogo : watsonsLogo;
                 
+                const btnText = currentLang === 'ar' ? '📄 عرض التفاصيل' : '📄 View Details';
+
                 grid.innerHTML += `
                     <div class="card">
-                        <div>
+                        <div onclick="showProductDetails('${p._id || p.id}')" style="cursor: pointer;">
                             <img src="${storeLogo}" style="height: 50px; object-fit: contain; margin: 0 auto 25px auto; display: block;" onerror="this.style.display='none'">
                             <img src="${p.image}" style="width: 100%; height: 180px; object-fit: contain; margin-bottom: 10px; border-radius: 8px;">
                             <h3>${p.name}</h3>
-                            <p style="font-size: 0.85rem; color: #555; text-align: start; height: 60px; overflow: hidden;">${desc}</p>
                         </div>
+                        
+                        <button class="btn-details" onclick="showProductDetails('${p._id || p.id}')">${btnText}</button>
+                        
                         <div>
                             <p class="original-price">${countryText}: ${p.originalTRY} TRY</p>
                             <div class="price-box">
@@ -519,6 +554,84 @@
             });
             renderPaginationControls(totalPages);
             updateCartUI();
+        }
+
+        // 🔍 THE FUNCTION TO OPEN THE BIG MODAL
+        function showProductDetails(productId) {
+            const product = products.find(p => p._id === productId || p.id === productId);
+            if (!product) return;
+
+            const currencyToggle = document.getElementById('currency-toggle');
+            const currency = currencyToggle ? currencyToggle.value : 'USD';
+            const rate = RATES[currency] || 1;
+            
+            const converted = currency === 'USD' ? (product.priceUSD * rate).toFixed(2) : Math.round(product.priceUSD * rate).toLocaleString();
+            const symbol = currency === 'USD' ? '$' : 'ل.س';
+            
+            const body = document.getElementById('product-modal-body');
+            const btnDescText = currentLang === 'ar' ? '📖 قراءة الوصف' : '📖 Read Description';
+            
+            // Build the inside of the Modal
+            body.innerHTML = `
+                <img src="${product.image}" class="product-detail-img" onerror="this.src='placeholder.png'">
+                <h2 class="product-detail-name">${product.name}</h2>
+                <p class="product-detail-price" style="margin-bottom: 10px;">${symbol} ${converted}</p>
+                
+                <button class="btn-outline" style="margin-bottom: 15px; padding: 8px; font-size: 0.9rem;" onclick="toggleModalDesc('${product._id || product.id}', this)">
+                    ${btnDescText}
+                </button>
+                
+                <div id="modal-desc-box" class="product-inline-desc" style="display: none; margin-bottom: 20px;" dir="${currentLang === 'ar' ? 'rtl' : 'ltr'}"></div>
+
+                <button class="btn-primary" onclick="addToCart('${product._id || product.id}'); toggleModal('product-modal');">
+                    ${currentLang === 'ar' ? 'أضف إلى السلة 🛒' : 'Add to Cart 🛒'}
+                </button>
+            `;
+            
+            toggleModal('product-modal');
+        }
+
+        // 🟢 FUNCTION TO SLIDE DOWN THE TEXT INSIDE THE MODAL
+        async function toggleModalDesc(productId, btnElement) {
+            const descBox = document.getElementById('modal-desc-box');
+            if (!descBox) return;
+
+            // If it's open, hide it
+            if (descBox.style.display === 'block') {
+                descBox.style.display = 'none';
+                btnElement.innerHTML = currentLang === 'ar' ? '📖 قراءة الوصف' : '📖 Read Description';
+                return;
+            }
+
+            const product = products.find(p => p._id === productId || p.id === productId);
+            let finalDesc = product.description || (currentLang === 'ar' ? 'لا يوجد وصف متاح لهذا المنتج.' : 'No description available for this product.');
+
+            // Open it
+            descBox.style.display = 'block';
+            btnElement.innerHTML = currentLang === 'ar' ? '⬆️ إخفاء الوصف' : '⬆️ Hide Description';
+
+            // Auto-translate if Arabic
+            if (currentLang === 'ar' && product.description) {
+                if (!descBox.dataset.translated) {
+                    descBox.innerHTML = '⏳ جاري الترجمة...';
+                    try {
+                        const res = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=ar&dt=t&q=${encodeURIComponent(product.description)}`);
+                        const data = await res.json();
+                        const translatedText = data[0].map(x => x[0]).join('');
+                        
+                        descBox.innerHTML = translatedText;
+                        descBox.dataset.translated = "true"; 
+                        product.cachedTranslation = translatedText; 
+                    } catch (error) {
+                        console.error("Translation failed", error);
+                        descBox.innerHTML = finalDesc; 
+                    }
+                } else {
+                    descBox.innerHTML = product.cachedTranslation || finalDesc;
+                }
+            } else {
+                descBox.innerHTML = finalDesc;
+            }
         }
 
         function renderPaginationControls(totalPages) {
@@ -653,7 +766,6 @@
             if (m) m.style.display = m.style.display === 'flex' ? 'none' : 'flex'; 
         }
 
-        // 📦 THE "MY ORDERS" FETCHING LOGIC IS RESTORED HERE!
         async function openMyOrders() {
             toggleModal('orders-modal');
             const list = document.getElementById('user-orders-list');
