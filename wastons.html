@@ -17,7 +17,6 @@
         select { padding: 8px 12px; border: 1px solid #ddd; border-radius: 8px; cursor: pointer; font-size: 0.95rem; font-family: inherit; outline: none; transition: 0.2s; height: 38px; box-sizing: border-box;}
         select:focus { border-color: var(--primary); }
         
-        /* 🌍 CUSTOM LANGUAGE DROPDOWN WITH IMAGES */
         .custom-dropdown { position: relative; font-family: inherit; font-size: 0.95rem; user-select: none;}
         .selected-lang { display: flex; align-items: center; gap: 8px; border: 1px solid #ddd; padding: 6px 12px; border-radius: 8px; cursor: pointer; background: white; transition: 0.2s; height: 38px; box-sizing: border-box;}
         .selected-lang:hover { border-color: var(--primary); }
@@ -26,7 +25,6 @@
         .lang-option:hover { background: #f8f9fa; color: var(--primary); }
         .lang-flag { width: 20px; height: 14px; object-fit: cover; border-radius: 2px; box-shadow: 0 0 2px rgba(0,0,0,0.2);}
         
-        /* 🎨 SEARCH BAR STYLES */
         .search-box { display: flex; align-items: center; background: #f1f3f5; border-radius: 20px; padding: 6px 15px; border: 1px solid #e9ecef; transition: 0.3s; height: 38px; box-sizing: border-box;}
         .search-box:focus-within { border-color: var(--primary); background: white; box-shadow: 0 0 0 3px rgba(74, 20, 140, 0.1); }
         .search-box input { border: none; background: transparent; outline: none; font-family: inherit; font-size: 0.95rem; width: 160px; transition: 0.3s;}
@@ -175,6 +173,7 @@
             <div class="cat-card" onclick="filterCategory('Mother & Baby')">
                 <img src="https://images.unsplash.com/photo-1555252333-9f8e92e65df9?w=500" alt="Baby">
                 <div class="cat-title" data-en="Mother & Baby" data-ar="الأم والطفل">Mother & Baby</div>
+            </div>
         </div>
     </div>
 
@@ -261,9 +260,8 @@
     </div>
 
     <script>
-        // MAKE SURE there is no 'localhost' here anymore!
-// Keep the '/api' at the end!
-const API_URL = 'https://syriacare.onrender.com/api';
+        // FIXED API URL (Must match your Render dashboard)
+        const API_URL = 'https://syriacare.onrender.com/api';
         const RATES = { USD: 1, SYP: 14500 };
         
         let products = []; 
@@ -290,7 +288,6 @@ const API_URL = 'https://syriacare.onrender.com/api';
             menu.style.display = menu.style.display === 'flex' ? 'none' : 'flex';
         }
 
-        // Close menu if user clicks anywhere else on the screen
         document.addEventListener('click', function(e) {
             const dropdown = document.getElementById('lang-dropdown');
             if (dropdown && !dropdown.contains(e.target)) {
@@ -303,10 +300,9 @@ const API_URL = 'https://syriacare.onrender.com/api';
             localStorage.setItem('syriaCareLang', lang);
             document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
             
-            // Update Custom Dropdown UI
             document.getElementById('current-flag').src = lang === 'ar' ? 'https://flagcdn.com/w20/sa.png' : 'https://flagcdn.com/w20/us.png';
             document.getElementById('current-lang-text').innerText = lang === 'ar' ? 'العربية' : 'English';
-            document.getElementById('lang-menu').style.display = 'none'; // Close the menu
+            document.getElementById('lang-menu').style.display = 'none';
             
             document.querySelectorAll('[data-en]').forEach(el => {
                 el.innerText = el.getAttribute(`data-${lang}`);
@@ -358,21 +354,25 @@ const API_URL = 'https://syriacare.onrender.com/api';
         function handleLogout() { currentUser = null; localStorage.removeItem('syriaCareUser'); updateAuthUI(); }
         function switchModals(closeId, openId) { toggleModal(closeId); toggleModal(openId); }
 
-       async function fetchProductsFromCloud() {
-    const grid = document.getElementById('product-grid');
-    try {
-        const response = await fetch(API_URL);
-        if (!response.ok) throw new Error("Connection failed");
-        
-        products = await response.json();
-        renderProducts(); 
-    } catch (error) {
-        console.error("Database Error:", error);
-        grid.innerHTML = `<p id="loading-message" style="color: #e74c3c;">
-            🔴 Server Offline: Make sure 'node server.js' is running on your laptop.
-        </p>`;
-    }
-}
+        // --- FIXED FETCH FUNCTION ---
+        async function fetchProductsFromCloud() {
+            const grid = document.getElementById('product-grid');
+            try {
+                // FIXED: Now calls the correct /products endpoint
+                const response = await fetch(`${API_URL}/products`); 
+                if (!response.ok) throw new Error("Connection failed");
+                
+                products = await response.json();
+                console.log("🟢 Data received from Cloud:", products);
+                
+                renderProducts(); 
+            } catch (error) {
+                console.error("🔴 Database Error:", error);
+                grid.innerHTML = `<p id="loading-message" style="color: #e74c3c;">
+                    🔴 Server Offline: Check your connection or wait 60s for Render to wake up.
+                </p>`;
+            }
+        }
 
         function handleSearch() {
             currentPage = 1;
@@ -507,8 +507,6 @@ const API_URL = 'https://syriacare.onrender.com/api';
         function toggleModal(id) { const m = document.getElementById(id); m.style.display = m.style.display === 'flex' ? 'none' : 'flex'; }
         
         fetchProductsFromCloud(); 
-        
-        // This makes sure the right flag loads immediately when you open the page!
         switchLanguage(currentLang);
     </script>
 </body>
