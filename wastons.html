@@ -69,6 +69,16 @@
     .price-amount { flex: 1; display: flex; align-items: center; justify-content: center; background: #faf5ff; color: var(--primary); font-weight: bold; }
     .price-add-btn { background: var(--primary); color: white; border: none; width: 40px; font-size: 1.5rem; cursor: pointer; }
 
+    /* RED SCARTCH MARK CSS */
+    .original-price {
+        color: #777;
+        text-decoration: line-through;
+        text-decoration-color: #e74c3c;
+        text-decoration-thickness: 2px;
+        font-size: 0.85rem;
+        margin: 5px 0;
+    }
+
     /* 🛒 NEW CART ITEM STYLING */
     .cart-item { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid #eee; text-align: left; }
     .cart-item img { width: 50px; height: 50px; object-fit: contain; border-radius: 4px; background: #f9f9f9; }
@@ -131,44 +141,21 @@
     .page-btn:disabled { border-color: #ddd; color: #aaa; cursor: not-allowed; background: #f9f9f9; box-shadow: none; transform: none;}
     
     @media (max-width: 600px) {
-        /* 📱 PRO MOBILE HEADER GRID */
         header { flex-direction: column; padding: 15px 5%; gap: 15px; align-items: stretch; }
         .logo { justify-content: center; width: 100%; margin: 0; }
-        
         .controls { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%; }
-        
-        /* Search Box - Full Width */
         .search-box { grid-column: span 2; width: 100%; justify-content: space-between; }
         .search-box input { width: 100%; flex: 1; }
-        
-        /* Auth Controls - Full Width Container */
         #auth-controls { grid-column: span 2; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; width: 100%; }
         .user-greeting { width: 100%; text-align: center; font-weight: bold; margin: 0 0 5px 0; display: block; font-size: 1rem; color: var(--primary); }
         .btn-header-auth { flex: 1; justify-content: center; font-size: 0.85rem; padding: 8px; height: auto; text-align: center; }
-        
-        /* Dropdowns - Side by Side */
         .custom-dropdown, #currency-toggle { width: 100%; }
         .selected-lang { justify-content: center; }
-        
-        /* Cart - Full Width */
         .btn-cart { grid-column: span 2; width: 100%; justify-content: center; display: flex; align-items: center; padding: 10px; }
-
         .grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
         .container { padding: 1rem 3%; }
         .card { padding: 10px; }
-        
-        .card h3 { 
-            font-size: 0.85rem; 
-            line-height: 1.3; 
-            height: 55px; 
-            margin: 5px 0 10px 0;
-            display: -webkit-box;
-            -webkit-line-clamp: 3; 
-            line-clamp: 3;         
-            -webkit-box-orient: vertical;
-            overflow: hidden;
-        }
-        
+        .card h3 { font-size: 0.85rem; line-height: 1.3; height: 55px; margin: 5px 0 10px 0; display: -webkit-box; -webkit-line-clamp: 3; line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
         .card img { height: 110px !important; }
         .price-amount { font-size: 0.85rem; }
         .category-grid-visual { grid-template-columns: repeat(2, 1fr); gap: 10px; }
@@ -354,7 +341,7 @@
                 <button class="close-btn" onclick="toggleModal('product-modal')">&times;</button>
             </div>
             <div id="product-modal-body">
-                </div>
+            </div>
         </div>
     </div>
 
@@ -551,22 +538,25 @@
                 const storeLogo = p.store === 'Gratis' ? gratisLogo : watsonsLogo;
                 
                 const btnText = currentLang === 'ar' ? '📄 عرض التفاصيل' : '📄 View Details';
+                const productId = p._id || p.id;
 
                 grid.innerHTML += `
                     <div class="card">
-                        <div onclick="showProductDetails('${p._id || p.id}')" style="cursor: pointer;">
+                        <div onclick="showProductDetails('${productId}')" style="cursor: pointer;">
                             <img src="${storeLogo}" style="height: 50px; object-fit: contain; margin: 0 auto 25px auto; display: block;" onerror="this.style.display='none'">
                             <img src="${p.image}" style="width: 100%; height: 180px; object-fit: contain; margin-bottom: 10px; border-radius: 8px;">
                             <h3>${p.name}</h3>
                         </div>
                         
-                        <button class="btn-details" onclick="showProductDetails('${p._id || p.id}')">${btnText}</button>
+                        <button class="btn-details" onclick="showProductDetails('${productId}')">${btnText}</button>
                         
+                        <div id="modal-desc-${productId}" class="product-inline-desc" style="display: none; margin-bottom: 20px;" dir="${currentLang === 'ar' ? 'rtl' : 'ltr'}"></div>
+
                         <div>
                             <p class="original-price">${countryText}: ${p.originalTRY} TRY</p>
                             <div class="price-box">
                                 <div class="price-amount">${symbol} ${converted}</div>
-                                <button class="price-add-btn" onclick="addToCart('${p._id || p.id}')">+</button>
+                                <button class="price-add-btn" onclick="addToCart('${productId}')">+</button>
                             </div>
                         </div>
                     </div>
@@ -591,7 +581,6 @@
             const body = document.getElementById('product-modal-body');
             const btnDescText = currentLang === 'ar' ? '📖 قراءة الوصف' : '📖 Read Description';
             
-            // Build the inside of the Modal
             body.innerHTML = `
                 <img src="${product.image}" class="product-detail-img" onerror="this.src='placeholder.png'">
                 <h2 class="product-detail-name">${product.name}</h2>
@@ -616,7 +605,6 @@
             const descBox = document.getElementById('modal-desc-box');
             if (!descBox) return;
 
-            // If it's open, hide it
             if (descBox.style.display === 'block') {
                 descBox.style.display = 'none';
                 btnElement.innerHTML = currentLang === 'ar' ? '📖 قراءة الوصف' : '📖 Read Description';
@@ -626,11 +614,9 @@
             const product = products.find(p => p._id === productId || p.id === productId);
             let finalDesc = product.description || (currentLang === 'ar' ? 'لا يوجد وصف متاح لهذا المنتج.' : 'No description available for this product.');
 
-            // Open it
             descBox.style.display = 'block';
             btnElement.innerHTML = currentLang === 'ar' ? '⬆️ إخفاء الوصف' : '⬆️ Hide Description';
 
-            // Auto-translate if Arabic
             if (currentLang === 'ar' && product.description) {
                 if (!descBox.dataset.translated) {
                     descBox.innerHTML = '⏳ جاري الترجمة...';
