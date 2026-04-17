@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SyriaCare Express</title>
     <style>
+        
     :root { --primary: #4a148c; --secondary: #009688; --bg: #f8f9fa; --text: #333; }
     body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; background-color: var(--bg); color: var(--text); transition: 0.3s; }
     
@@ -85,6 +86,10 @@
         .card img { height: 120px !important; }
         .category-grid-visual { grid-template-columns: repeat(2, 1fr); gap: 10px; }
         .cat-card img { height: 110px; }
+        /* Prevents iPhone/Safari from zooming in on text fields */
+input, select, textarea {
+    font-size: 16px !important;
+}
     }
 </style>
 </head>
@@ -322,13 +327,40 @@
         }
 
         function handleRegister(e) {
-            e.preventDefault();
-            const user = { name: document.getElementById('reg-name').value, surname: document.getElementById('reg-surname').value, location: document.getElementById('reg-location').value, phone: document.getElementById('reg-phone').value, password: document.getElementById('reg-password').value };
-            mockDatabase.push(user);
-            localStorage.setItem('syriaCareDB', JSON.stringify(mockDatabase));
-            loginUser(user);
-            toggleModal('register-modal');
-        }
+    e.preventDefault();
+    
+    try {
+        // We use optional chaining (?.) and check for null to prevent crashes
+        const nameField = document.getElementById('reg-name');
+        const surnameField = document.getElementById('reg-surname');
+        const phoneField = document.getElementById('reg-phone');
+        const passField = document.getElementById('reg-password');
+        const locField = document.getElementById('reg-location');
+
+        const user = {
+            name: nameField ? nameField.value : "Guest",
+            surname: surnameField ? surnameField.value : "",
+            phone: phoneField ? phoneField.value : "",
+            password: passField ? passField.value : "",
+            location: locField ? locField.value : "Istanbul" // Default if missing
+        };
+
+        // Save to Local Storage
+        mockDatabase.push(user);
+        localStorage.setItem('syriaCareDB', JSON.stringify(mockDatabase));
+        
+        // Log in
+        loginUser(user);
+        
+        // Close modal and celebrate
+        toggleModal('register-modal');
+        alert(currentLang === 'ar' ? 'تم إنشاء الحساب بنجاح!' : 'Account Created Successfully!');
+        
+    } catch (error) {
+        console.error("Registration Error:", error);
+        alert("Something went wrong with the form. Please check the console.");
+    }
+}
 
         function handleLogin(e) {
             e.preventDefault();
