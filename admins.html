@@ -3,177 +3,183 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Dashboard | SyriaCare</title>
+    <title>SyriaCare Admin</title>
     <style>
-        :root { --primary: #4a148c; --bg: #f4f7f6; --text: #333; }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; display: flex; background: var(--bg); color: var(--text); height: 100vh;}
+        :root { --primary: #4a148c; --secondary: #009688; --bg: #f4f6f9; --text: #333; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; background-color: var(--bg); color: var(--text); display: flex; height: 100vh; overflow: hidden; }
         
-        .sidebar { width: 260px; background: white; box-shadow: 2px 0 10px rgba(0,0,0,0.05); display: flex; flex-direction: column; padding: 20px 0; z-index: 10;}
-        .sidebar h2 { color: var(--primary); text-align: center; margin-bottom: 20px; font-size: 1.4rem;}
+        /* SIDEBAR STYLING */
+        .sidebar { width: 250px; background: white; border-right: 1px solid #ddd; display: flex; flex-direction: column; padding: 20px 0; box-shadow: 2px 0 5px rgba(0,0,0,0.05); }
+        .sidebar-logo { font-size: 1.5rem; font-weight: bold; color: var(--primary); text-align: center; margin-bottom: 20px; }
+        .status-badge { background: #e8f8f5; color: #27ae60; padding: 8px 15px; border-radius: 20px; font-size: 0.85rem; font-weight: bold; text-align: center; margin: 0 20px 30px 20px; border: 1px solid #c8e6c9; }
         
-        .db-status { margin: 0 auto 30px auto; padding: 10px 15px; font-size: 0.85rem; font-weight: bold; border-radius: 8px; text-align: center; width: 80%; transition: 0.3s; background: #fff3cd; color: #856404; border: 1px solid #ffeeba; }
-        .db-status.connected { background: #d4edda; color: #155724; border-color: #c3e6cb; }
-        .db-status.disconnected { background: #f8d7da; color: #721c24; border-color: #f5c6cb; }
+        .menu-item { padding: 15px 25px; color: #555; text-decoration: none; font-weight: 600; display: block; border-left: 4px solid transparent; transition: 0.2s; cursor: pointer; }
+        .menu-item:hover { background: #f9f9f9; color: var(--primary); }
+        .menu-item.active { background: #f3e5f5; color: var(--primary); border-left-color: var(--primary); }
+        
+        .spacer { flex: 1; }
+        .go-store { padding: 15px 25px; color: #555; text-decoration: none; font-weight: 600; display: block; border-top: 1px solid #eee; }
+        .go-store:hover { color: var(--primary); }
 
-        .nav-btn { padding: 15px 25px; background: none; border: none; text-align: left; font-size: 1rem; font-weight: 600; color: #666; cursor: pointer; transition: 0.2s; border-left: 4px solid transparent; }
-        .nav-btn:hover { background: #fafafa; color: var(--primary); }
-        .nav-btn.active { background: #f3e5f5; color: var(--primary); border-left-color: var(--primary); }
-
+        /* MAIN CONTENT STYLING */
         .main-content { flex: 1; padding: 40px; overflow-y: auto; }
-        .tab-content { display: none; }
-        .tab-content.active { display: block; animation: fadeIn 0.3s; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px);} to {opacity: 1; transform: translateY(0);} }
+        .section { display: none; }
+        .section.active { display: block; }
+        h1 { margin-top: 0; color: #222; }
         
-        h1 { margin-top: 0; margin-bottom: 25px; font-size: 1.8rem; }
-        
-        .card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); margin-bottom: 25px;}
-        .form-row { display: flex; gap: 15px; margin-bottom: 15px;}
-        .form-group { flex: 1; margin-bottom: 15px;}
-        .form-group label { display: block; font-weight: 600; font-size: 0.9rem; margin-bottom: 5px; color: #555;}
-        .form-group input, .form-group select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; font-family: inherit;}
-        
-        .btn-submit { background: var(--primary); color: white; border: none; padding: 12px 20px; font-weight: bold; border-radius: 6px; cursor: pointer; font-size: 1rem; transition: 0.2s;}
-        .btn-submit:hover { opacity: 0.9; }
-        
-        .btn-delete { background: #e74c3c; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-weight: bold; transition: 0.2s;}
-        .btn-delete:hover { background: #c0392b; }
-        .btn-edit { background: #f39c12; color: white; border: none; padding: 8px 15px; border-radius: 6px; cursor: pointer; font-weight: bold; transition: 0.2s; margin-right: 5px;}
-        .btn-edit:hover { background: #d68910; }
-
-        table { width: 100%; border-collapse: collapse; background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.05);}
-        th, td { padding: 15px; text-align: left; border-bottom: 1px solid #eee; font-size: 0.95rem; vertical-align: middle;}
-        th { background: var(--primary); color: white; font-weight: 600;}
+        /* TABLE STYLING */
+        .table-container { background: white; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); overflow: hidden; margin-top: 20px; }
+        table { width: 100%; border-collapse: collapse; text-align: left; }
+        th { background: var(--primary); color: white; padding: 15px; font-size: 0.95rem; }
+        td { padding: 15px; border-bottom: 1px solid #eee; font-size: 0.9rem; vertical-align: middle; }
         tr:hover { background: #fafafa; }
-        
-        .order-items { list-style: none; padding: 0; margin: 0; font-size: 0.85rem; color: #666;}
-        .order-items li { margin-bottom: 3px; }
 
-        /* EDIT MODAL */
-        .modal { display: none; position: fixed; top: 0; right: 0; bottom: 0; left: 0; background: rgba(0,0,0,0.6); z-index: 2000; justify-content: center; align-items: center; backdrop-filter: blur(4px); }
-        .modal-content { background: white; padding: 30px; border-radius: 16px; width: 90%; max-width: 500px; box-shadow: 0 20px 40px rgba(0,0,0,0.2); animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
-        @keyframes popIn { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
-        .modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #f1f1f1; padding-bottom: 12px; margin-bottom: 20px; }
-        .modal-header h3 { margin: 0; color: var(--primary); font-size: 1.4rem;}
-        .close-btn { background: #f1f1f1; border: none; font-size: 1.2rem; color: #555; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.2s; }
-        .close-btn:hover { background: #e0e0e0; color: #000; transform: rotate(90deg);}
+        .items-list { margin: 0; padding-left: 15px; color: #555; font-size: 0.85rem; }
+        .total-price { color: #e74c3c; font-weight: bold; }
+
+        /* DROPDOWNS */
+        .status-select { padding: 6px 10px; border-radius: 6px; font-weight: bold; border: 1px solid #ddd; cursor: pointer; }
+        .status-Pending { background-color: #fff3e0; color: #d35400; }
+        .status-Accepted { background-color: #e3f2fd; color: #2980b9; }
+        .status-On-the-Way { background-color: #f3e5f5; color: #8e44ad; }
+        .status-Delivered { background-color: #e8f8f5; color: #27ae60; }
+        .status-Cancelled { background-color: #ffebee; color: #c0392b; }
+
+        /* FORM STYLING */
+        .admin-form { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); max-width: 600px; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; font-weight: bold; margin-bottom: 5px; color: #555; }
+        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-family: inherit; box-sizing: border-box; }
+        .btn-primary { background: var(--primary); color: white; border: none; padding: 12px 20px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 1rem; width: 100%; }
+        .btn-warning { background: #f39c12; color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        .btn-danger { background: #e74c3c; color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; }
+
     </style>
 </head>
 <body>
 
     <div class="sidebar">
-        <h2>SyriaCare Admin</h2>
-        <div id="db-status" class="db-status">🟡 Checking connection...</div>
-        <button class="nav-btn active" onclick="switchTab('orders-tab', this)">📦 View Orders</button>
-        <button class="nav-btn" onclick="switchTab('products-tab', this)">➕ Add Product</button>
-        <button class="nav-btn" onclick="switchTab('manage-tab', this)">🗑️ Manage Products</button>
-        <button class="nav-btn" style="margin-top: auto;" onclick="window.location.href='wastons.html'">🌍 Go to Store</button>
+        <div class="sidebar-logo">SyriaCare Admin</div>
+        <div class="status-badge" id="db-status">🟢 Connected</div>
+        
+        <a class="menu-item active" id="tab-orders" onclick="switchTab('orders')">📦 View Orders</a>
+        <a class="menu-item" id="tab-add" onclick="switchTab('add')">➕ Add Product</a>
+        <a class="menu-item" id="tab-manage" onclick="switchTab('manage')">🗑️ Manage Products</a>
+        
+        <div class="spacer"></div>
+        <a href="wastons.html" class="go-store">🌍 Go to Store</a>
     </div>
 
     <div class="main-content">
         
-        <div id="orders-tab" class="tab-content active">
+        <div id="section-orders" class="section active">
             <h1>Customer Orders</h1>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Date</th>
-                        <th>Customer Name</th>
-                        <th>Phone</th>
-                        <th>Location</th>
-                        <th>Order Total (SYP)</th>
-                        <th>Items Ordered</th>
-                    </tr>
-                </thead>
-                <tbody id="orders-table-body">
-                    <tr><td colspan="6" style="text-align:center;">Loading orders...</td></tr>
-                </tbody>
-            </table>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Customer Name</th>
+                            <th>Phone</th>
+                            <th>Order Total (SYP)</th>
+                            <th>Items Ordered</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="orders-table-body">
+                        <tr><td colspan="6" style="text-align: center; padding: 20px;">Loading...</td></tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
 
-        <div id="products-tab" class="tab-content">
+        <div id="section-add" class="section">
             <h1>Add New Product</h1>
-            <div class="card">
-                <form id="add-product-form" onsubmit="addProduct(event)">
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label>Product Name</label>
-                            <input type="text" id="p-name" required>
-                        </div>
-                        <div class="form-group">
-                            <label>Store</label>
-                            <select id="p-store" required>
-                                <option value="Gratis">Gratis</option>
-                                <option value="Watsons">Watsons</option>
-                            </select>
-                        </div>
+            <form class="admin-form" onsubmit="submitNewProduct(event)">
+                <div class="form-group">
+                    <label>Product Name</label>
+                    <input type="text" id="p-name" required>
+                </div>
+                <div style="display: flex; gap: 15px;">
+                    <div class="form-group" style="flex: 1;">
+                        <label>Original Price (TRY)</label>
+                        <input type="number" id="p-try" required>
                     </div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label>Category</label>
-                            <select id="p-cat" required>
-                                <option value="Makeup">Makeup</option>
-                                <option value="Skin Care">Skin Care</option>
-                                <option value="Hair Care">Hair Care</option>
-                                <option value="Perfume & Deodorant">Perfume & Deodorant</option>
-                                <option value="Personal Care">Personal Care</option>
-                                <option value="Electrical Products">Electrical Products</option>
-                                <option value="Solar Products">Solar Products</option>
-                                <option value="Mother & Baby">Mother & Baby</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label>Price in USD ($)</label>
-                            <input type="number" step="0.01" id="p-usd" required>
-                        </div>
-                        <div class="form-group">
-                            <label>Original Price (TRY)</label>
-                            <input type="number" step="0.01" id="p-try" required>
-                        </div>
+                    <div class="form-group" style="flex: 1;">
+                        <label>Sell Price (USD)</label>
+                        <input type="number" step="0.01" id="p-usd" required>
                     </div>
-                    <div class="form-group">
-                        <label>Product Image (JPG/PNG)</label>
-                        <input type="file" id="p-image" accept="image/*" required>
+                </div>
+                <div style="display: flex; gap: 15px;">
+                    <div class="form-group" style="flex: 1;">
+                        <label>Category (Type)</label>
+                        <select id="p-cat" required>
+                            <option value="Makeup">Makeup</option>
+                            <option value="Skin Care">Skin Care</option>
+                            <option value="Hair Care">Hair Care</option>
+                            <option value="Perfume & Deodorant">Perfumes</option>
+                            <option value="Personal Care">Personal Care</option>
+                            <option value="Electrical Products">Electrical</option>
+                            <option value="Solar Products">Solar Care</option>
+                            <option value="Mother & Baby">Mother & Baby</option>
+                        </select>
                     </div>
-                    <button type="submit" class="btn-submit">Save Product to Store</button>
-                </form>
-            </div>
+                    <div class="form-group" style="flex: 1;">
+                        <label>Store</label>
+                        <select id="p-store" required>
+                            <option value="Gratis">Gratis</option>
+                            <option value="Watsons">Watsons</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Product Image</label>
+                    <input type="file" id="p-img-file" accept="image/*" style="background: #f9f9f9; padding: 5px;">
+                    <p style="font-size: 0.8rem; margin: 5px 0; color: #777;">OR paste a Web URL:</p>
+                    <input type="text" id="p-img-url" placeholder="https://...">
+                </div>
+                <div class="form-group">
+                    <label>Description (Optional)</label>
+                    <textarea id="p-desc" rows="3"></textarea>
+                </div>
+                <button type="submit" class="btn-primary">➕ Save Product to Database</button>
+            </form>
         </div>
 
-        <div id="manage-tab" class="tab-content">
-            <h1>Manage Store Inventory</h1>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Image</th>
-                        <th>Product Name</th>
-                        <th>Category</th>
-                        <th>Price (USD)</th>
-                        <th>Action</th>
-                    </tr>
-                </thead>
-                <tbody id="manage-table-body">
-                    <tr><td colspan="5" style="text-align:center;">Loading products...</td></tr>
-                </tbody>
-            </table>
-        </div>
-
-    </div>
-
-    <div id="edit-modal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3>Edit Product</h3>
-                <button class="close-btn" onclick="document.getElementById('edit-modal').style.display='none'">&times;</button>
-            </div>
-            <form id="edit-product-form" onsubmit="saveEdit(event)">
-                <input type="hidden" id="edit-id"> 
+        <div id="section-edit" class="section">
+            <h1>Edit Product</h1>
+            <form class="admin-form" onsubmit="submitEditProduct(event)">
+                <input type="hidden" id="edit-id">
                 
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Product Name</label>
-                        <input type="text" id="edit-name" required>
+                <div class="form-group">
+                    <label>Product Name</label>
+                    <input type="text" id="edit-name" required>
+                </div>
+                <div style="display: flex; gap: 15px;">
+                    <div class="form-group" style="flex: 1;">
+                        <label>Original Price (TRY)</label>
+                        <input type="number" id="edit-try" required>
                     </div>
-                    <div class="form-group">
+                    <div class="form-group" style="flex: 1;">
+                        <label>Sell Price (USD)</label>
+                        <input type="number" step="0.01" id="edit-usd" required>
+                    </div>
+                </div>
+                <div style="display: flex; gap: 15px;">
+                    <div class="form-group" style="flex: 1;">
+                        <label>Category (Type)</label>
+                        <select id="edit-cat" required>
+                            <option value="Makeup">Makeup</option>
+                            <option value="Skin Care">Skin Care</option>
+                            <option value="Hair Care">Hair Care</option>
+                            <option value="Perfume & Deodorant">Perfumes</option>
+                            <option value="Personal Care">Personal Care</option>
+                            <option value="Electrical Products">Electrical</option>
+                            <option value="Solar Products">Solar Care</option>
+                            <option value="Mother & Baby">Mother & Baby</option>
+                        </select>
+                    </div>
+                    <div class="form-group" style="flex: 1;">
                         <label>Store</label>
                         <select id="edit-store" required>
                             <option value="Gratis">Gratis</option>
@@ -181,207 +187,56 @@
                         </select>
                     </div>
                 </div>
-                
                 <div class="form-group">
-                    <label>Category</label>
-                    <select id="edit-cat" required>
-                        <option value="Makeup">Makeup</option>
-                        <option value="Skin Care">Skin Care</option>
-                        <option value="Hair Care">Hair Care</option>
-                        <option value="Perfume & Deodorant">Perfume & Deodorant</option>
-                        <option value="Personal Care">Personal Care</option>
-                        <option value="Electrical Products">Electrical Products</option>
-                        <option value="Solar Products">Solar Products</option>
-                        <option value="Mother & Baby">Mother & Baby</option>
-                    </select>
+                    <label>Product Image</label>
+                    <input type="file" id="edit-img-file" accept="image/*" style="background: #f9f9f9; padding: 5px;">
+                    <p style="font-size: 0.8rem; margin: 5px 0; color: #777;">Current Image (URL or Data):</p>
+                    <input type="text" id="edit-img-url" placeholder="https://...">
                 </div>
-
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Price in USD ($)</label>
-                        <input type="number" step="0.01" id="edit-usd" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Original Price (TRY)</label>
-                        <input type="number" step="0.01" id="edit-try" required>
-                    </div>
+                <div class="form-group">
+                    <label>Description</label>
+                    <textarea id="edit-desc" rows="3"></textarea>
                 </div>
-                
-                <button type="submit" class="btn-submit" style="width: 100%;">Save Changes</button>
+                <div style="display: flex; gap: 10px;">
+                    <button type="submit" class="btn-primary" style="flex: 2;">💾 Save Changes</button>
+                    <button type="button" class="btn-danger" style="flex: 1; padding: 12px;" onclick="switchTab('manage')">Cancel</button>
+                </div>
             </form>
         </div>
+
+        <div id="section-manage" class="section">
+            <h1>Manage Products</h1>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Image</th>
+                            <th>Name</th>
+                            <th>Category</th>
+                            <th>Price (USD)</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="products-table-body">
+                        <tr><td colspan="5" style="text-align: center; padding: 20px;">Loading...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
     </div>
 
     <script>
-        // MAKE SURE there is no 'localhost' here anymore!
-// Keep the '/api' at the end!
-const API_URL = 'https://syriacare.onrender.com/api';
-        let storeInventory = []; 
+        const API_URL = 'https://syriacare.onrender.com/api';
+        let adminProducts = [];
 
-        function switchTab(tabId, btn) {
-            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
-            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-            
-            document.getElementById(tabId).classList.add('active');
-            btn.classList.add('active');
+        window.onload = () => {
+            fetchOrders();
+            fetchProductsAdmin();
+        };
 
-            if(tabId === 'orders-tab') fetchOrders();
-            if(tabId === 'manage-tab') fetchManageProducts();
-        }
-
-        async function fetchOrders() {
-            const statusBadge = document.getElementById('db-status');
-            const tbody = document.getElementById('orders-table-body');
-            
-            try {
-                const response = await fetch(`${API_URL}/orders`);
-                if (response.ok) {
-                    statusBadge.className = 'db-status connected';
-                    statusBadge.innerHTML = '🟢 MongoDB Connected';
-                } else { throw new Error("Server rejected connection"); }
-
-                const orders = await response.json();
-                tbody.innerHTML = '';
-
-                if(orders.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">No orders placed yet.</td></tr>';
-                    return;
-                }
-
-                orders.forEach(order => {
-                    const date = new Date(order.date).toLocaleString('en-GB', { dateStyle: 'short', timeStyle: 'short' });
-                    let itemsHtml = '<ul class="order-items">';
-                    order.items.forEach(item => { itemsHtml += `<li>• ${item.name}</li>`; });
-                    itemsHtml += '</ul>';
-
-                    tbody.innerHTML += `
-                        <tr>
-                            <td>${date}</td>
-                            <td style="font-weight: bold;">${order.name} ${order.surname}</td>
-                            <td>${order.phone}</td>
-                            <td>${order.location}</td>
-                            <td style="color:#e74c3c; font-weight:bold;">${Math.round(order.total).toLocaleString()} ل.س</td>
-                            <td>${itemsHtml}</td>
-                        </tr>
-                    `;
-                });
-            } catch (err) {
-                statusBadge.className = 'db-status disconnected';
-                statusBadge.innerHTML = '🔴 Database Offline';
-                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color: #e74c3c;">Failed to connect to the database.</td></tr>';
-            }
-        }
-
-        async function fetchManageProducts() {
-            const tbody = document.getElementById('manage-table-body');
-            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">Loading...</td></tr>';
-            
-            try {
-                const response = await fetch(`${API_URL}/products`);
-                storeInventory = await response.json(); 
-                tbody.innerHTML = '';
-
-                if(storeInventory.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">No products in store.</td></tr>';
-                    return;
-                }
-
-                storeInventory.forEach(p => {
-                    // FIX: This forces the table to accept BOTH old database IDs and new IDs!
-                    const safeId = p.id || p._id; 
-                    
-                    tbody.innerHTML += `
-                        <tr>
-                            <td><img src="${p.image}" style="width: 50px; height: 50px; object-fit: contain; border-radius: 8px; border: 1px solid #eee;"></td>
-                            <td style="font-weight: bold;">${p.name}</td>
-                            <td>${p.category}</td>
-                            <td style="color:#27ae60; font-weight:bold;">$${p.priceUSD.toFixed(2)}</td>
-                            <td>
-                                <button class="btn-edit" onclick="openEditModal('${safeId}')">Edit</button>
-                                <button class="btn-delete" onclick="deleteProduct('${safeId}')">Delete</button>
-                            </td>
-                        </tr>
-                    `;
-                });
-            } catch (err) {
-                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color: #e74c3c;">Failed to load products.</td></tr>';
-            }
-        }
-
-        function openEditModal(id) {
-            // FIX: This searches safely for both types of IDs!
-            const product = storeInventory.find(p => p.id == id || p._id == id);
-            
-            if (!product) {
-                alert("Error: Could not find product details in memory.");
-                return;
-            }
-
-            document.getElementById('edit-id').value = product.id || product._id;
-            document.getElementById('edit-name').value = product.name;
-            document.getElementById('edit-store').value = product.store;
-            document.getElementById('edit-cat').value = product.category;
-            document.getElementById('edit-usd').value = product.priceUSD;
-            document.getElementById('edit-try').value = product.originalTRY;
-
-            document.getElementById('edit-modal').style.display = 'flex';
-        }
-
-        async function saveEdit(e) {
-            e.preventDefault();
-            const id = document.getElementById('edit-id').value;
-            const submitBtn = e.target.querySelector('.btn-submit');
-            
-            submitBtn.innerText = "Saving...";
-            submitBtn.disabled = true;
-
-            const updatedData = {
-                name: document.getElementById('edit-name').value,
-                store: document.getElementById('edit-store').value,
-                category: document.getElementById('edit-cat').value,
-                priceUSD: parseFloat(document.getElementById('edit-usd').value),
-                originalTRY: parseFloat(document.getElementById('edit-try').value)
-            };
-
-            try {
-                const response = await fetch(`${API_URL}/products/${id}`, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(updatedData)
-                });
-
-                if (response.ok) {
-                    document.getElementById('edit-modal').style.display = 'none';
-                    alert("Product updated successfully! ✅");
-                    fetchManageProducts(); 
-                } else {
-                    alert("Failed to update product. Is your server running the newest code?");
-                }
-            } catch (error) {
-                alert("Error connecting to server. Please restart your terminal.");
-            } finally {
-                submitBtn.innerText = "Save Changes";
-                submitBtn.disabled = false;
-            }
-        }
-
-        async function deleteProduct(id) {
-            const confirmDelete = confirm("Are you sure you want to permanently delete this product?");
-            if (!confirmDelete) return;
-
-            try {
-                const response = await fetch(`${API_URL}/products/${id}`, { method: 'DELETE' });
-                if (response.ok) { 
-                    fetchManageProducts(); 
-                } else { 
-                    alert("Failed to delete product. Please restart your terminal."); 
-                }
-            } catch (error) {
-                alert("Error connecting to server.");
-            }
-        }
-
-        function getBase64(file) {
+        // --- FILE TO BASE64 CONVERTER ---
+        function convertFileToBase64(file) {
             return new Promise((resolve, reject) => {
                 const reader = new FileReader();
                 reader.readAsDataURL(file);
@@ -390,48 +245,228 @@ const API_URL = 'https://syriacare.onrender.com/api';
             });
         }
 
-        async function addProduct(e) {
-            e.preventDefault();
-            const fileInput = document.getElementById('p-image');
-            const file = fileInput.files[0];
-            const btn = e.target.querySelector('.btn-submit');
+        // --- TAB NAVIGATION ---
+        function switchTab(tabName) {
+            document.querySelectorAll('.section').forEach(sec => sec.classList.remove('active'));
+            document.querySelectorAll('.menu-item').forEach(btn => btn.classList.remove('active'));
             
-            if (!file) return alert("Please select an image");
+            document.getElementById(`section-${tabName}`).classList.add('active');
+            
+            const activeTabButton = document.getElementById(`tab-${tabName}`);
+            if(activeTabButton) activeTabButton.classList.add('active');
+        }
 
-            btn.innerText = "Uploading...";
-            btn.disabled = true;
+        // --- ORDERS LOGIC ---
+        async function fetchOrders() {
+            const tbody = document.getElementById('orders-table-body');
+            try {
+                const response = await fetch(`${API_URL}/orders`);
+                if (!response.ok) throw new Error('Network response was not ok');
+                const orders = await response.json();
+                orders.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+                
+                tbody.innerHTML = '';
+                orders.forEach(order => {
+                    const dateObj = new Date(order.createdAt);
+                    const dateStr = dateObj.toLocaleDateString('en-GB') + ' ' + dateObj.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                    
+                    let itemsHTML = '<ul class="items-list">';
+                    order.items.forEach(item => { itemsHTML += `<li>${item.quantity || 1} x ${item.name}</li>`; });
+                    itemsHTML += '</ul>';
+
+                    const currentStatus = order.status || 'Pending';
+                    const statusClass = `status-${currentStatus.replace(/ /g, '-')}`;
+
+                    tbody.innerHTML += `
+                        <tr>
+                            <td style="color: #666; font-size: 0.8rem;">${dateStr}</td>
+                            <td style="font-weight: bold;">${order.name} <br><span style="font-weight:normal; font-size:0.8rem;">${order.phone}</span></td>
+                            <td>${order.location}</td>
+                            <td class="total-price">${(order.total || 0).toLocaleString()} ل.س</td>
+                            <td>${itemsHTML}</td>
+                            <td>
+                                <select class="status-select ${statusClass}" onchange="updateOrderStatus('${order._id}', this)">
+                                    <option value="Pending" ${currentStatus === 'Pending' ? 'selected' : ''}>⏳ Pending</option>
+                                    <option value="Accepted" ${currentStatus === 'Accepted' ? 'selected' : ''}>👍 Accepted</option>
+                                    <option value="On the Way" ${currentStatus === 'On the Way' ? 'selected' : ''}>🚚 On the Way</option>
+                                    <option value="Delivered" ${currentStatus === 'Delivered' ? 'selected' : ''}>✅ Delivered</option>
+                                    <option value="Cancelled" ${currentStatus === 'Cancelled' ? 'selected' : ''}>❌ Cancelled</option>
+                                </select>
+                            </td>
+                        </tr>
+                    `;
+                });
+            } catch (error) {
+                console.error(error);
+                tbody.innerHTML = `<tr><td colspan="6" style="color: red; text-align: center;">Error loading orders.</td></tr>`;
+            }
+        }
+
+        async function updateOrderStatus(orderId, selectElement) {
+            const newStatus = selectElement.value;
+            selectElement.className = `status-select status-${newStatus.replace(/ /g, '-')}`;
+            try {
+                await fetch(`${API_URL}/orders/${orderId}/status`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ status: newStatus })
+                });
+            } catch (error) {
+                alert("Failed to update status. Server error.");
+            }
+        }
+
+        // --- PRODUCT LOGIC ---
+        async function fetchProductsAdmin() {
+            const tbody = document.getElementById('products-table-body');
+            try {
+                const response = await fetch(`${API_URL}/products`);
+                adminProducts = await response.json(); 
+                tbody.innerHTML = '';
+                
+                adminProducts.forEach(p => {
+                    tbody.innerHTML += `
+                        <tr>
+                            <td><img src="${p.image}" style="width: 40px; height: 40px; object-fit: contain; border-radius: 4px;"></td>
+                            <td style="font-weight: bold; max-width: 200px;">${p.name}</td>
+                            <td>${p.category}</td>
+                            <td style="color: var(--primary); font-weight: bold;">$${p.priceUSD}</td>
+                            <td>
+                                <button class="btn-warning" style="margin-right: 5px;" onclick="openEditForm('${p._id || p.id}')">✏️ Edit</button>
+                                <button class="btn-danger" onclick="deleteProduct('${p._id || p.id}')">🗑️</button>
+                            </td>
+                        </tr>
+                    `;
+                });
+            } catch (error) {
+                tbody.innerHTML = `<tr><td colspan="5" style="color: red; text-align: center;">Error loading products.</td></tr>`;
+            }
+        }
+
+        async function submitNewProduct(e) {
+            e.preventDefault();
+            
+            let finalImage = "";
+            const fileInput = document.getElementById('p-img-file').files[0];
+            const urlInput = document.getElementById('p-img-url').value;
+
+            if (fileInput) {
+                finalImage = await convertFileToBase64(fileInput);
+            } else if (urlInput) {
+                finalImage = urlInput;
+            } else {
+                alert("Please select an image file or paste a URL!");
+                return;
+            }
+
+            const newProduct = {
+                name: document.getElementById('p-name').value,
+                originalTRY: Number(document.getElementById('p-try').value),
+                priceUSD: Number(document.getElementById('p-usd').value),
+                category: document.getElementById('p-cat').value,
+                store: document.getElementById('p-store').value,
+                image: finalImage,
+                description: document.getElementById('p-desc').value,
+                inStock: true
+            };
 
             try {
-                const base64Image = await getBase64(file);
-                const newProduct = {
-                    id: Date.now().toString(),
-                    name: document.getElementById('p-name').value,
-                    store: document.getElementById('p-store').value,
-                    category: document.getElementById('p-cat').value,
-                    priceUSD: parseFloat(document.getElementById('p-usd').value),
-                    originalTRY: parseFloat(document.getElementById('p-try').value),
-                    image: base64Image
-                };
-
                 const res = await fetch(`${API_URL}/products`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(newProduct)
                 });
-
-                if (!res.ok) throw new Error("Database rejected save");
-
-                alert("Product Added Successfully!");
-                document.getElementById('add-product-form').reset();
+                if (res.ok) {
+                    alert("Product Added Successfully!");
+                    e.target.reset(); 
+                    fetchProductsAdmin(); 
+                    switchTab('manage'); 
+                } else {
+                    alert("Failed to add product. Check server logs.");
+                }
             } catch (error) {
-                alert("Failed to upload product. Is the server running?");
-            } finally {
-                btn.innerText = "Save Product to Store";
-                btn.disabled = false;
+                alert("Server connection failed.");
             }
         }
 
-        fetchOrders();
+        function openEditForm(id) {
+            const product = adminProducts.find(p => (p._id || p.id) === id);
+            if (!product) return;
+
+            document.getElementById('edit-id').value = id;
+            document.getElementById('edit-name').value = product.name;
+            document.getElementById('edit-try').value = product.originalTRY || '';
+            document.getElementById('edit-usd').value = product.priceUSD;
+            document.getElementById('edit-cat').value = product.category;
+            document.getElementById('edit-store').value = product.store || 'Gratis';
+            document.getElementById('edit-desc').value = product.description || '';
+            
+            // Clear the file input and put the current image in the text box
+            document.getElementById('edit-img-file').value = ""; 
+            document.getElementById('edit-img-url').value = product.image || "";
+
+            switchTab('edit');
+        }
+
+        async function submitEditProduct(e) {
+            e.preventDefault();
+            const id = document.getElementById('edit-id').value;
+            
+            let finalImage = "";
+            const fileInput = document.getElementById('edit-img-file').files[0];
+            const urlInput = document.getElementById('edit-img-url').value;
+
+            if (fileInput) {
+                finalImage = await convertFileToBase64(fileInput);
+            } else if (urlInput) {
+                finalImage = urlInput;
+            } else {
+                alert("Please select an image file or paste a URL!");
+                return;
+            }
+            
+            const updatedProduct = {
+                name: document.getElementById('edit-name').value,
+                originalTRY: Number(document.getElementById('edit-try').value),
+                priceUSD: Number(document.getElementById('edit-usd').value),
+                category: document.getElementById('edit-cat').value,
+                store: document.getElementById('edit-store').value,
+                image: finalImage,
+                description: document.getElementById('edit-desc').value
+            };
+
+            try {
+                const res = await fetch(`${API_URL}/products/${id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(updatedProduct)
+                });
+                
+                if (res.ok) {
+                    alert("Product Updated Successfully!");
+                    fetchProductsAdmin(); 
+                    switchTab('manage'); 
+                } else {
+                    alert("Failed to update product. Check server logs.");
+                }
+            } catch (error) {
+                alert("Server connection failed.");
+            }
+        }
+
+        async function deleteProduct(id) {
+            if (!confirm("Are you sure you want to delete this product?")) return;
+            try {
+                const res = await fetch(`${API_URL}/products/${id}`, { method: 'DELETE' });
+                if (res.ok) {
+                    fetchProductsAdmin(); 
+                } else {
+                    alert("Failed to delete product.");
+                }
+            } catch (error) {
+                alert("Server connection failed.");
+            }
+        }
     </script>
 </body>
 </html>
