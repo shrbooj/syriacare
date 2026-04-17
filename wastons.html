@@ -261,7 +261,9 @@
     </div>
 
     <script>
-        const API_URL = 'http://localhost:5000/api/products';
+        // MAKE SURE there is no 'localhost' here anymore!
+// Keep the '/api' at the end!
+const API_URL = 'https://syriacare.onrender.com/api';
         const RATES = { USD: 1, SYP: 14500 };
         
         let products = []; 
@@ -356,15 +358,21 @@
         function handleLogout() { currentUser = null; localStorage.removeItem('syriaCareUser'); updateAuthUI(); }
         function switchModals(closeId, openId) { toggleModal(closeId); toggleModal(openId); }
 
-        async function fetchProductsFromCloud() {
-            try {
-                const response = await fetch(API_URL);
-                products = await response.json();
-                renderProducts(); 
-            } catch (error) {
-                console.error("Database connection failed:", error);
-            }
-        }
+       async function fetchProductsFromCloud() {
+    const grid = document.getElementById('product-grid');
+    try {
+        const response = await fetch(API_URL);
+        if (!response.ok) throw new Error("Connection failed");
+        
+        products = await response.json();
+        renderProducts(); 
+    } catch (error) {
+        console.error("Database Error:", error);
+        grid.innerHTML = `<p id="loading-message" style="color: #e74c3c;">
+            🔴 Server Offline: Make sure 'node server.js' is running on your laptop.
+        </p>`;
+    }
+}
 
         function handleSearch() {
             currentPage = 1;
