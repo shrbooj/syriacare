@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Checkout | SyriaCare Express</title>
+    <style>
+        :root { --primary: #4a148c; --secondary: #009688; --bg: #f8f9fa; --text: #333; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; background-color: var(--bg); color: var(--text); display: flex; flex-direction: column; align-items: center; transition: 0.3s; }
+        
+        header { background-color: white; width: 100%; padding: 1rem 5%; display: flex; justify-content: space-between; box-shadow: 0 2px 5px rgba(0,0,0,0.1); box-sizing: border-box; align-items: center; }
+        .logo { font-size: 1.5rem; font-weight: bold; cursor: pointer; text-decoration: none; display: flex; align-items: center; gap: 12px; }
+        .logo span:nth-child(1) { color: var(--primary); }
+        .logo span:nth-child(2) { color: var(--secondary); }
+
+        .checkout-container { width: 90%; max-width: 600px; background: white; margin: 40px auto; padding: 30px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.06); }
+        h2 { text-align: center; margin-top: 0; color: var(--primary); }
+        h3 { border-bottom: 2px solid #eee; padding-bottom: 10px; margin-top: 25px; font-size: 1.1rem;}
+
+        .form-group { margin-bottom: 15px; text-align: start; }
+        .form-group label { display: block; margin-bottom: 5px; font-weight: 600; font-size: 0.9rem; color: #444;}
+        .form-group input, .form-group textarea { width: 100%; padding: 12px; border: 2px solid #eee; border-radius: 8px; box-sizing: border-box; font-family: inherit; transition: 0.2s; outline: none; background: #fafafa;}
+        .form-group input:focus, .form-group textarea:focus { border-color: var(--primary); background: white;}
+
+        .btn-primary { background: linear-gradient(135deg, var(--primary), #7c43bd); color: white; border: none; width: 100%; padding: 15px; font-size: 1.1rem; font-weight: bold; border-radius: 8px; cursor: pointer; margin-top: 20px; transition: 0.3s; box-shadow: 0 4px 15px rgba(74, 20, 140, 0.25);}
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(74, 20, 140, 0.4); }
+        .btn-back { display: block; text-align: center; margin-top: 15px; color: #666; font-size: 0.9rem; background: none; border: none; width: 100%; cursor: pointer; font-family: inherit; font-weight: bold; }
+        .btn-back:hover { color: var(--primary); }
+
+        #success-message { display: none; text-align: center; padding: 40px 20px; }
+        .checkmark { font-size: 60px; color: var(--secondary); margin-bottom: 20px; }
+        #success-message h2 { color: var(--secondary); }
+        #success-message p { font-size: 1.1rem; line-height: 1.5; color: #555; }
+        #checkout-form-area { display: block; }
+        select.lang-select { padding: 8px 12px; border-radius: 8px; border: 1px solid #ddd; font-family: inherit; outline: none; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <a href="wastons.html" class="logo">
+            <img src="http://localhost:5000/images/logo.jpg" alt="Logo" style="height: 40px; border-radius: 5px;" onerror="this.style.display='none'">
+            <div><span>SyriaCare</span><span>Express</span></div>
+        </a>
+        <select id="lang-toggle" class="lang-select" onchange="switchLanguage(this.value)">
+            <option value="en">🇺🇸 English</option>
+            <option value="ar">🇸🇦 العربية</option>
+        </select>
+    </header>
+
+    <div class="checkout-container">
+        <div id="checkout-form-area">
+            <h2 data-en="Secure Checkout" data-ar="الدفع الآمن">Secure Checkout</h2>
+            
+            <form onsubmit="processCheckout(event)">
+                <h3 data-en="Shipping Information" data-ar="معلومات الشحن">Shipping Information</h3>
+                
+                <div style="display: flex; gap: 10px;">
+                    <div class="form-group" style="flex: 1;">
+                        <label data-en="First Name" data-ar="الاسم الأول">First Name</label>
+                        <input type="text" id="chk-name" required>
+                    </div>
+                    <div class="form-group" style="flex: 1;">
+                        <label data-en="Surname" data-ar="الكنية">Surname</label>
+                        <input type="text" id="chk-surname" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label data-en="Phone Number (WhatsApp preferred)" data-ar="رقم الهاتف (يفضل واتساب)">Phone Number (WhatsApp preferred)</label>
+                    <input type="tel" id="chk-phone" required placeholder="+963...">
+                </div>
+
+                <div class="form-group">
+                    <label data-en="Full Delivery Address in Syria" data-ar="عنوان التسليم الكامل في سوريا">Full Delivery Address in Syria</label>
+                    <textarea id="chk-address" rows="3" required></textarea>
+                </div>
+
+                <button type="submit" class="btn-primary" id="submit-btn" data-en="Confirm & Place Order" data-ar="تأكيد وإتمام الطلب">Confirm & Place Order</button>
+                <button type="button" class="btn-back" onclick="window.location.href='wastons.html'" data-en="← Back to Store" data-ar="← العودة للمتجر">← Back to Store</button>
+            </form>
+        </div>
+
+        <div id="success-message">
+            <div class="checkmark">✔</div>
+            <h2 data-en="Order Received!" data-ar="تم استلام الطلب!">Order Received!</h2>
+            <p><strong data-en="You will receive a call within the next 24 hours to confirm your order." data-ar="ستتلقى مكالمة خلال 24 ساعة لتأكيد طلبك.">You will receive a call within the next 24 hours to confirm your order.</strong></p>
+            <p style="font-size: 0.9rem; margin-top: 20px;" data-en="Please keep your phone nearby. Payment will be collected upon delivery." data-ar="يرجى إبقاء هاتفك قريباً. سيتم تحصيل الدفع عند الاستلام.">Please keep your phone nearby. Payment will be collected upon delivery.</p>
+            <button type="button" class="btn-primary" onclick="window.location.href='wastons.html'" style="width: auto; padding: 12px 30px; margin-top: 30px;" data-en="Return to Store" data-ar="العودة للمتجر">Return to Store</button>
+        </div>
+    </div>
+
+    <script>
+        let currentLang = localStorage.getItem('syriaCareLang') || 'en';
+        let cart = JSON.parse(localStorage.getItem('syriaCareCart')) || [];
+        let currentUser = JSON.parse(localStorage.getItem('syriaCareUser')) || null;
+
+        function switchLanguage(lang) {
+            currentLang = lang;
+            localStorage.setItem('syriaCareLang', lang);
+            document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
+            document.getElementById('lang-toggle').value = lang;
+            
+            document.querySelectorAll('[data-en]').forEach(el => {
+                el.innerText = el.getAttribute(`data-${lang}`);
+            });
+        }
+
+        window.onload = function() {
+            switchLanguage(currentLang);
+            if (currentUser) {
+                document.getElementById('chk-name').value = currentUser.name || '';
+                document.getElementById('chk-surname').value = currentUser.surname || '';
+                document.getElementById('chk-phone').value = currentUser.phone || '';
+                document.getElementById('chk-address').value = currentUser.location || '';
+            }
+        };
+
+        // NEW: SEND ORDER TO SERVER
+        async function processCheckout(event) {
+            event.preventDefault();
+            const btn = document.getElementById('submit-btn');
+            btn.innerText = currentLang === 'ar' ? 'جاري الإرسال...' : 'Processing...';
+            btn.disabled = true;
+
+            let totalSYP = 0;
+            cart.forEach(item => { totalSYP += (item.priceUSD * 14500); });
+
+            const orderData = {
+                name: document.getElementById('chk-name').value,
+                surname: document.getElementById('chk-surname').value,
+                phone: document.getElementById('chk-phone').value,
+                location: document.getElementById('chk-address').value,
+                items: cart,
+                total: totalSYP
+            };
+
+            try {
+                // Post data to the Mongo Database
+                await fetch('http://localhost:5000/api/orders', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(orderData)
+                });
+
+                document.getElementById('checkout-form-area').style.display = 'none';
+                document.getElementById('success-message').style.display = 'block';
+                localStorage.removeItem('syriaCareCart'); 
+            } catch (error) {
+                alert(currentLang === 'ar' ? 'حدث خطأ. يرجى المحاولة مرة أخرى.' : 'Error connecting to server. Please try again.');
+                btn.innerText = currentLang === 'ar' ? 'تأكيد وإتمام الطلب' : 'Confirm & Place Order';
+                btn.disabled = false;
+            }
+        }
+    </script>
+</body>
+</html>
