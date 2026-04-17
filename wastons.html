@@ -237,6 +237,16 @@
                 <h3 data-en="Welcome Back" data-ar="مرحباً بعودتك">Welcome Back</h3>
                 <button class="close-btn" onclick="toggleModal('login-modal')">&times;</button>
             </div>
+            <div id="orders-modal" class="modal">
+        <div class="modal-content" style="max-height: 85vh; overflow-y: auto;">
+            <div class="modal-header">
+                <h3 data-en="My Orders" data-ar="طلباتي">My Orders</h3>
+                <button class="close-btn" onclick="toggleModal('orders-modal')">&times;</button>
+            </div>
+            <div id="user-orders-list" style="display: flex; flex-direction: column; gap: 15px;">
+                </div>
+        </div>
+    </div>
             <form onsubmit="handleLogin(event)">
                 <div class="form-group">
                     <label data-en="Phone Number" data-ar="رقم الهاتف">Phone Number</label>
@@ -377,8 +387,12 @@
             if (currentUser) {
                 const greeting = currentLang === 'ar' ? `مرحباً، ${currentUser.name}` : `Hi, ${currentUser.name}`;
                 const signOutText = currentLang === 'ar' ? 'تسجيل الخروج' : 'Sign Out';
+                const ordersText = currentLang === 'ar' ? 'طلباتي' : 'Orders';
+                
+                // Added the Orders button next to Sign Out
                 authContainer.innerHTML = `
                     <span class="user-greeting" style="margin-right: 8px;">${greeting}</span>
+                    <button class="btn-header-auth" onclick="openMyOrders()">📦 ${ordersText}</button>
                     <button class="btn-header-auth" onclick="handleLogout()">${signOutText}</button>
                 `;
             } else {
@@ -658,6 +672,51 @@
             const currEl = document.getElementById('cart-currency');
             if (totalEl) totalEl.innerText = currency === 'USD' ? grandTotal.toFixed(2) : Math.round(grandTotal).toLocaleString();
             if (currEl) currEl.innerText = currency;
+        }
+        async function openMyOrders() {
+            toggleModal('orders-modal');
+            const list = document.getElementById('user-orders-list');
+            list.innerHTML = `<p style="text-align:center;">${currentLang === 'ar' ? 'جاري التحميل...' : 'Loading orders...'}</p>`;
+            
+            try {
+                // This asks the server for orders matching the user's phone number
+                const response = await fetch(`${API_URL}/orders/phone/${currentUser.phone}`);
+                if (!response.ok) throw new Error("Could not fetch orders");
+                
+                const orders = await response.json();
+                list.innerHTML = '';
+                
+                if (orders.length === 0) {
+                    list.innerHTML = `<p style="text-align:center; color:#777;">${currentLang === 'ar' ? 'لا توجد طلبات سابقة.' : 'No previous orders found.'}</p>`;
+                    return;
+                }
+
+                orders.forEach(order => {
+                    // Set up the color for the status badge
+                    let statusColor = '#f39c12'; // Orange for Pending
+                    if (order.status === 'Accepted') statusColor = '#3498db'; // Blue
+                    if (order.status === 'On the Way') statusColor = '#9b59b6'; // Purple
+                    if (order.status === 'Delivered') statusColor = '#2ecc71'; // Green
+                    
+                    const statusText = order.status || 'Pending';
+                    const dateText = new Date(order.createdAt).toLocaleDateString();
+
+                    list.innerHTML += `
+                        <div style="border: 1px solid #eee; border-radius: 8px; padding: 15px; background: #fafafa;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                                <span style="font-weight: bold; color: var(--primary);">${dateText}</span>
+                                <span style="background: ${statusColor}; color: white; padding: 4px 10px; border-radius: 12px; font-size: 0.85rem; font-weight: bold;">
+                                    ${statusText}
+                                </span>
+                            </div>
+                            <p style="margin: 0; font-size: 0.95rem;">Total: <strong>${order.total.toLocaleString()} SYP</strong></p>
+                        </div>
+                    `;
+                });
+            } catch (error) {
+                console.error(error);
+                list.innerHTML = `<p style="text-align:center; color:red;">Error loading orders.</p>`;
+            }
         }
 
         function changeQuantity(index, delta) {
