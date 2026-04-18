@@ -7,10 +7,7 @@
     <style>
     :root { --primary: #4a148c; --secondary: #009688; --bg: #f8f9fa; --text: #333; }
     body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; background-color: var(--bg); color: var(--text); transition: 0.3s; }
-    /* Disables the annoying double-tap to zoom on all buttons */
-    button {
-        touch-action: manipulation;
-    }
+    button { touch-action: manipulation; }
    
     header { background-color: white; padding: 1rem 5%; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 1000; box-shadow: 0 2px 10px rgba(0,0,0,0.08); flex-wrap: wrap; gap: 15px;}
     .logo { font-size: 1.5rem; font-weight: bold; text-decoration: none; display: flex; align-items: center; gap: 12px; }
@@ -39,9 +36,19 @@
     .btn-outline { background: transparent; color: var(--primary); border: 2px solid var(--primary); width: 100%; padding: 10px; font-weight: bold; border-radius: 8px; transition: all 0.3s ease; margin-top: 10px;}
     .btn-outline:hover { background: rgba(74, 20, 140, 0.05); transform: translateY(-1px); }
 
-    .hero { background: linear-gradient(135deg, var(--primary), var(--secondary)); color: white; text-align: center; padding: 2.5rem 1rem; }
-    .shop-by-category { padding: 2rem 5%; text-align: center; background: white; }
+    /* ── ANIMATED HERO WITH BACKGROUND VIDEO ── */
+    .hero { position: relative; overflow: hidden; color: white; text-align: center; padding: 3.5rem 1rem; min-height: 220px; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+    .hero-video { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; z-index: 0; }
+    .hero-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(135deg, rgba(0), rgba(05)); z-index: 1; }
+    .hero-content { position: relative; z-index: 2; width: 100%; }
     
+    .hero-title-container { height: 2rem; margin-bottom: 1rem; position: relative; width: 100%; overflow: hidden; }
+    .hero h1 { font-size: 1.8rem; margin: 0; transition: opacity 0.5s, transform 0.5s; position: absolute; width: 100%; left: 0; text-shadow: 0 2px 5px rgba(0,0,0,0.3); }
+    .hero p { font-size: 1.1rem; opacity: 0.95; margin: 0; transition: opacity 0.5s; text-shadow: 0 2px 5px rgba(0,0,0,0.3); }
+    .fade-out { opacity: 0; transform: translateY(-20px); }
+    .fade-in { opacity: 1; transform: translateY(0); }
+
+    .shop-by-category { padding: 2rem 5%; text-align: center; background: white; }
     .category-grid-visual { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-top: 25px; }
     .cat-card { position: relative; border-radius: 12px; overflow: hidden; cursor: pointer; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
     .cat-card img { width: 100%; height: 150px; object-fit: cover; filter: brightness(0.75); display: block; }
@@ -53,69 +60,31 @@
     .card { background: white; border-radius: 12px; padding: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.06); text-align: center; display: flex; flex-direction: column; justify-content: space-between; border: 1px solid #eee; transition: 0.3s;}
     .card:hover { transform: translateY(-5px); box-shadow: 0 8px 20px rgba(0,0,0,0.1); }
     
-    .card h3 { 
-        font-size: 1rem; 
-        height: 60px; 
-        overflow: hidden; 
-        margin: 10px 0;
-        line-height: 1.3;
-        display: -webkit-box;
-        -webkit-line-clamp: 2; 
-        line-clamp: 2;         
-        -webkit-box-orient: vertical;
-    }
+    .card h3 { font-size: 1rem; height: 60px; overflow: hidden; margin: 10px 0; line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; }
 
     .price-box { display: flex; border: 1px solid #f0e6f7; border-radius: 8px; margin-top: 10px; overflow: hidden; height: 40px; }
     .price-amount { flex: 1; display: flex; align-items: center; justify-content: center; background: #faf5ff; color: var(--primary); font-weight: bold; }
     .price-add-btn { background: var(--primary); color: white; border: none; width: 40px; font-size: 1.5rem; cursor: pointer; }
 
-    /* RED SCARTCH MARK CSS */
-    .original-price {
-        color: #777;
-        text-decoration: line-through;
-        text-decoration-color: #e74c3c;
-        text-decoration-thickness: 2px;
-        font-size: 0.85rem;
-        margin: 5px 0;
-    }
+    .original-price { color: #777; text-decoration: line-through; text-decoration-color: #e74c3c; text-decoration-thickness: 2px; font-size: 0.85rem; margin: 5px 0; }
 
-    /* 🛒 NEW CART ITEM STYLING */
     .cart-item { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid #eee; text-align: left; }
     .cart-item img { width: 50px; height: 50px; object-fit: contain; border-radius: 4px; background: #f9f9f9; }
     .cart-item-info { flex: 1; }
     .cart-item-name { font-size: 0.9rem; font-weight: 600; margin: 0; line-height: 1.2; }
     .cart-item-price { font-size: 0.85rem; color: var(--primary); margin: 3px 0 0 0; }
     
-    /* 📄 BUTTONS & INLINE BOX */
     .btn-details { background: transparent; color: var(--primary); border: 1px solid var(--primary); width: 100%; padding: 6px; font-weight: 600; border-radius: 6px; transition: 0.2s; margin-bottom: 10px; cursor: pointer; font-size: 0.85rem; }
     .btn-details:hover { background: rgba(74, 20, 140, 0.08); }
     
-    .product-inline-desc { 
-        display: none; 
-        background: #f4edf9; 
-        padding: 15px; 
-        border-radius: 8px; 
-        font-size: 0.95rem; 
-        color: #444; 
-        text-align: start; 
-        border: 1px solid #eaddf4; 
-        line-height: 1.6; 
-        animation: fadeIn 0.3s ease-in-out;
-    }
+    .product-inline-desc { display: none; background: #f4edf9; padding: 15px; border-radius: 8px; font-size: 0.95rem; color: #444; text-align: start; border: 1px solid #eaddf4; line-height: 1.6; animation: fadeIn 0.3s ease-in-out; }
     @keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
 
-    /* 🔍 PRODUCT DETAILS MODAL STYLING */
     .product-detail-img { width: 100%; max-height: 250px; object-fit: contain; border-radius: 8px; margin-bottom: 15px; }
     .product-detail-name { font-size: 1.2rem; margin: 0 0 10px 0; color: var(--primary); line-height: 1.3; }
     .product-detail-price { font-size: 1.3rem; font-weight: bold; color: var(--secondary); margin-bottom: 15px; }
 
-    /* ✅ TOAST NOTIFICATION STYLING */
-    #toast {
-        visibility: hidden; min-width: 250px; background-color: var(--secondary); color: #fff;
-        text-align: center; border-radius: 30px; padding: 14px; position: fixed;
-        z-index: 3000; left: 50%; bottom: 30px; transform: translateX(-50%);
-        font-weight: bold; box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-    }
+    #toast { visibility: hidden; min-width: 250px; background-color: var(--secondary); color: #fff; text-align: center; border-radius: 30px; padding: 14px; position: fixed; z-index: 3000; left: 50%; bottom: 30px; transform: translateX(-50%); font-weight: bold; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
     #toast.show { visibility: visible; animation: fadein 0.5s, fadeout 0.5s 2.5s; }
     @keyframes fadein { from {bottom: 0; opacity: 0;} to {bottom: 30px; opacity: 1;} }
     @keyframes fadeout { from {bottom: 30px; opacity: 1;} to {bottom: 0; opacity: 0;} }
@@ -176,9 +145,7 @@
                 <input type="text" id="search-input" onkeyup="handleSearch()" data-placeholder-en="Search products..." data-placeholder-ar="بحث عن منتج...">
                 <span style="opacity: 0.5;">🔍</span>
             </div>
-
             <div id="auth-controls"></div>
-            
             <div class="custom-dropdown" id="lang-dropdown">
                 <div class="selected-lang" onclick="toggleLangMenu()">
                     <img id="current-flag" class="lang-flag" src="https://flagcdn.com/w20/us.png" alt="flag"> 
@@ -194,7 +161,6 @@
                     </div>
                 </div>
             </div>
-            
             <select id="currency-toggle" onchange="renderProducts()">
                 <option value="USD">USD ($)</option>
                 <option value="SYP">SYP (ل.س)</option>
@@ -206,8 +172,17 @@
     </header>
 
     <div class="hero">
-        <h1 data-en="Your Favorite Turkish Brands, Delivered to Syria" data-ar="ماركاتك التركية المفضلة، تصلك إلى سوريا">Your Favorite Turkish Brands, Delivered to Syria</h1>
-        <p data-en="Shop directly from Gratis & Watsons. Prices include shipping and customs." data-ar="تسوق مباشرة من غراتيس وواتسونز. الأسعار تشمل الشحن والجمارك.">Shop directly from Gratis & Watsons. Prices include shipping and customs.</p>
+        <video class="hero-video" autoplay loop muted playsinline>
+            <source src="Luxury_Cream_Macro_Shot_Video.mp4" type="video/mp4">
+        </video>
+        <div class="hero-overlay"></div>
+        
+        <div class="hero-content">
+            <div class="hero-title-container">
+                <h1 id="hero-title">Your Favorite Turkish Brands, Delivered to Syria</h1>
+            </div>
+            <p id="hero-sub">Shop directly from Gratis & Watsons. Prices include shipping and customs.</p>
+        </div>
     </div>
 
     <div class="shop-by-category" id="category-section">
@@ -366,6 +341,46 @@
             'Solar Products': 'العناية من الشمس', 'Mother & Baby': 'الأم والطفل', 'All': 'التوجهات الحالية'
         };
 
+        // ── HERO ANIMATION LOGIC ──
+        const heroData = [
+            {
+                en: { title: "Your Favorite Turkish Brands, Delivered to Syria", sub: "Shop directly from Gratis & Watsons. Prices include shipping and customs." },
+                ar: { title: "ماركاتك التركية المفضلة، تصلك إلى سوريا", sub: "تسوق مباشرة من غراتيس وواتسونز. الأسعار تشمل الشحن والجمارك." }
+            },
+            {
+                en: { title: "Fast and Reliable Delivery", sub: "Safe transport from Turkey to your doorstep in Syria." },
+                ar: { title: "توصيل سريع وموثوق", sub: "نقل آمن من تركيا إلى باب منزلك في سوريا." }
+            },
+            {
+                en: { title: "The Best Prices Guaranteed", sub: "We offer the most competitive rates for high-quality products." },
+                ar: { title: "أفضل الأسعار مضمونة", sub: "نقدم أفضل الأسعار التنافسية للمنتجات عالية الجودة." }
+            }
+        ];
+        let heroIndex = 0;
+
+        function updateHero() {
+            const titleEl = document.getElementById('hero-title');
+            const subEl = document.getElementById('hero-sub');
+            
+            titleEl.classList.add('fade-out');
+            subEl.classList.add('fade-out');
+            
+            setTimeout(() => {
+                heroIndex = (heroIndex + 1) % heroData.length;
+                const content = heroData[heroIndex][currentLang];
+                
+                titleEl.innerText = content.title;
+                subEl.innerText = content.sub;
+                
+                titleEl.classList.remove('fade-out');
+                subEl.classList.remove('fade-out');
+                titleEl.classList.add('fade-in');
+                subEl.classList.add('fade-in');
+            }, 500);
+        }
+
+        setInterval(updateHero, 5000);
+
         function toggleLangMenu() {
             const menu = document.getElementById('lang-menu');
             if (menu) menu.style.display = menu.style.display === 'flex' ? 'none' : 'flex';
@@ -399,6 +414,11 @@
             const searchInput = document.getElementById('search-input');
             if (searchInput) searchInput.placeholder = searchInput.getAttribute(`data-placeholder-${lang}`);
             
+            // Sync current hero content immediately on language switch
+            const content = heroData[heroIndex][lang];
+            document.getElementById('hero-title').innerText = content.title;
+            document.getElementById('hero-sub').innerText = content.sub;
+
             updateAuthUI(); 
             filterCategory(activeCategory, false); 
             updateCartUI();
@@ -536,7 +556,6 @@
             paginatedProducts.forEach(p => {
                 const converted = currency === 'USD' ? (p.priceUSD * rate).toFixed(2) : Math.round(p.priceUSD * rate).toLocaleString();
                 const storeLogo = p.store === 'Gratis' ? gratisLogo : watsonsLogo;
-                
                 const btnText = currentLang === 'ar' ? '📄 عرض التفاصيل' : '📄 View Details';
                 const productId = p._id || p.id;
 
@@ -547,11 +566,8 @@
                             <img src="${p.image}" style="width: 100%; height: 180px; object-fit: contain; margin-bottom: 10px; border-radius: 8px;">
                             <h3>${p.name}</h3>
                         </div>
-                        
                         <button class="btn-details" onclick="showProductDetails('${productId}')">${btnText}</button>
-                        
                         <div id="modal-desc-${productId}" class="product-inline-desc" style="display: none; margin-bottom: 20px;" dir="${currentLang === 'ar' ? 'rtl' : 'ltr'}"></div>
-
                         <div>
                             <p class="original-price">${countryText}: ${p.originalTRY} TRY</p>
                             <div class="price-box">
@@ -566,18 +582,14 @@
             updateCartUI();
         }
 
-        // 🔍 THE FUNCTION TO OPEN THE BIG MODAL
         function showProductDetails(productId) {
             const product = products.find(p => p._id === productId || p.id === productId);
             if (!product) return;
-
             const currencyToggle = document.getElementById('currency-toggle');
             const currency = currencyToggle ? currencyToggle.value : 'USD';
             const rate = RATES[currency] || 1;
-            
             const converted = currency === 'USD' ? (product.priceUSD * rate).toFixed(2) : Math.round(product.priceUSD * rate).toLocaleString();
             const symbol = currency === 'USD' ? '$' : 'ل.س';
-            
             const body = document.getElementById('product-modal-body');
             const btnDescText = currentLang === 'ar' ? '📖 قراءة الوصف' : '📖 Read Description';
             
@@ -585,38 +597,29 @@
                 <img src="${product.image}" class="product-detail-img" onerror="this.src='placeholder.png'">
                 <h2 class="product-detail-name">${product.name}</h2>
                 <p class="product-detail-price" style="margin-bottom: 10px;">${symbol} ${converted}</p>
-                
                 <button class="btn-outline" style="margin-bottom: 15px; padding: 8px; font-size: 0.9rem;" onclick="toggleModalDesc('${product._id || product.id}', this)">
                     ${btnDescText}
                 </button>
-                
                 <div id="modal-desc-box" class="product-inline-desc" style="display: none; margin-bottom: 20px;" dir="${currentLang === 'ar' ? 'rtl' : 'ltr'}"></div>
-
                 <button class="btn-primary" onclick="addToCart('${product._id || product.id}'); toggleModal('product-modal');">
                     ${currentLang === 'ar' ? 'أضف إلى السلة 🛒' : 'Add to Cart 🛒'}
                 </button>
             `;
-            
             toggleModal('product-modal');
         }
 
-        // 🟢 FUNCTION TO SLIDE DOWN THE TEXT INSIDE THE MODAL
         async function toggleModalDesc(productId, btnElement) {
             const descBox = document.getElementById('modal-desc-box');
             if (!descBox) return;
-
             if (descBox.style.display === 'block') {
                 descBox.style.display = 'none';
                 btnElement.innerHTML = currentLang === 'ar' ? '📖 قراءة الوصف' : '📖 Read Description';
                 return;
             }
-
             const product = products.find(p => p._id === productId || p.id === productId);
             let finalDesc = product.description || (currentLang === 'ar' ? 'لا يوجد وصف متاح لهذا المنتج.' : 'No description available for this product.');
-
             descBox.style.display = 'block';
             btnElement.innerHTML = currentLang === 'ar' ? '⬆️ إخفاء الوصف' : '⬆️ Hide Description';
-
             if (currentLang === 'ar' && product.description) {
                 if (!descBox.dataset.translated) {
                     descBox.innerHTML = '⏳ جاري الترجمة...';
@@ -624,7 +627,6 @@
                         const res = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=ar&dt=t&q=${encodeURIComponent(product.description)}`);
                         const data = await res.json();
                         const translatedText = data[0].map(x => x[0]).join('');
-                        
                         descBox.innerHTML = translatedText;
                         descBox.dataset.translated = "true"; 
                         product.cachedTranslation = translatedText; 
@@ -644,7 +646,6 @@
             const container = document.getElementById('pagination-controls');
             if (!container) return;
             if (totalPages <= 1) { container.innerHTML = ''; return; }
-            
             let html = `<button class="page-btn" ${currentPage === 1 ? 'disabled' : ''} onclick="changePage(${currentPage - 1})">Previous</button>`;
             for (let i = 1; i <= totalPages; i++) {
                 html += `<button class="page-btn ${currentPage === i ? 'active' : ''}" onclick="changePage(${i})">${i}</button>`;
@@ -662,23 +663,17 @@
 
         function addToCart(productId) {
             if (!currentUser) { toggleModal('login-modal'); return; }
-            
             const product = products.find(p => p._id === productId || p.id === productId);
             if (!product) return;
-
             cart = cart.filter(item => item !== null);
-
             const existingItem = cart.find(item => (item._id || item.id) === productId);
-
             if (existingItem) {
                 existingItem.quantity = (existingItem.quantity || 1) + 1;
             } else {
                 cart.push({ ...product, quantity: 1 });
             }
-
             localStorage.setItem('syriaCareCart', JSON.stringify(cart));
             updateCartUI();
-
             const toast = document.getElementById("toast");
             if (toast) {
                 toast.innerText = currentLang === 'ar' ? "تمت الإضافة للسلة! ✅" : "Added to Cart! ✅";
@@ -692,18 +687,14 @@
             const currencyToggle = document.getElementById('currency-toggle');
             const currency = currencyToggle ? currencyToggle.value : 'USD';
             const rate = RATES[currency] || 1;
-            
             let totalItemCount = cart.reduce((acc, item) => {
                 if (!item) return acc;
                 return acc + (item.quantity || 1);
             }, 0);
-            
             const countEl = document.getElementById('cart-count');
             if (countEl) countEl.innerText = totalItemCount;
-            
             if (list) list.innerHTML = '';
             let grandTotal = 0;
-            
             if (cart.length === 0) {
                 if (list) list.innerHTML = `<p style="text-align:center; color:#777; padding:20px;">${currentLang === 'ar' ? 'سلتك فارغة' : 'Your cart is empty'}</p>`;
             } else {
@@ -713,18 +704,14 @@
                     const unitPrice = (item.priceUSD * rate);
                     const lineTotal = unitPrice * qty;
                     grandTotal += lineTotal;
-                    
                     const unitPriceText = currency === 'USD' ? `$${unitPrice.toFixed(2)}` : `${Math.round(unitPrice).toLocaleString()} ل.س`;
                     const lineTotalText = currency === 'USD' ? `$${lineTotal.toFixed(2)}` : `${Math.round(lineTotal).toLocaleString()} ل.س`;
-                    
                     const unitLabel = currentLang === 'ar' ? 'سعر الوحدة' : 'Unit Price';
-
                     if (list) list.innerHTML += `
                         <div class="cart-item" style="align-items: flex-start;">
                             <img src="${item.image}" alt="${item.name}" onerror="this.src='placeholder.png'">
                             <div class="cart-item-info" style="flex: 1; margin-right: 10px;">
                                 <p class="cart-item-name" style="margin-bottom: 8px;">${item.name}</p>
-                                
                                 <div style="display: flex; justify-content: space-between; align-items: center;">
                                     <div style="display: flex; align-items: center; background: #f4edf9; border-radius: 6px; border: 1px solid #eaddf4; overflow: hidden;">
                                         <button onclick="changeQuantity(${index}, -1)" style="background:none; border:none; color: var(--primary); padding: 4px 10px; cursor: pointer; font-weight: bold; font-size: 1.1rem;">-</button>
@@ -733,10 +720,7 @@
                                         </span>
                                         <button onclick="changeQuantity(${index}, 1)" style="background:none; border:none; color: var(--primary); padding: 4px 10px; cursor: pointer; font-weight: bold; font-size: 1.1rem;">+</button>
                                     </div>
-                                    
-                                    <span style="font-size: 0.95rem; font-weight: bold; color: #222;">
-                                        ${lineTotalText}
-                                    </span>
+                                    <span style="font-size: 0.95rem; font-weight: bold; color: #222;">${lineTotalText}</span>
                                 </div>
                                 <p style="font-size: 0.75rem; color: #888; margin: 4px 0 0 0;">${unitLabel}: ${unitPriceText}</p>
                             </div>
@@ -744,7 +728,6 @@
                         </div>`;
                 });
             }
-            
             const totalEl = document.getElementById('cart-total');
             const currEl = document.getElementById('cart-currency');
             if (totalEl) totalEl.innerText = currency === 'USD' ? grandTotal.toFixed(2) : Math.round(grandTotal).toLocaleString();
@@ -776,29 +759,23 @@
             toggleModal('orders-modal');
             const list = document.getElementById('user-orders-list');
             list.innerHTML = `<p style="text-align:center;">${currentLang === 'ar' ? 'جاري التحميل...' : 'Loading orders...'}</p>`;
-            
             try {
                 const response = await fetch(`${API_URL}/orders/phone/${currentUser.phone}`);
                 if (!response.ok) throw new Error("Could not fetch orders");
-                
                 const orders = await response.json();
                 list.innerHTML = '';
-                
                 if (orders.length === 0) {
                     list.innerHTML = `<p style="text-align:center; color:#777;">${currentLang === 'ar' ? 'لا توجد طلبات سابقة.' : 'No previous orders found.'}</p>`;
                     return;
                 }
-
                 orders.forEach(order => {
-                    let statusColor = '#f39c12'; // Orange for Pending
-                    if (order.status === 'Accepted') statusColor = '#3498db'; // Blue
-                    if (order.status === 'On the Way') statusColor = '#9b59b6'; // Purple
-                    if (order.status === 'Delivered') statusColor = '#2ecc71'; // Green
-                    if (order.status === 'Cancelled') statusColor = '#e74c3c'; // Red
-                    
+                    let statusColor = '#f39c12';
+                    if (order.status === 'Accepted') statusColor = '#3498db';
+                    if (order.status === 'On the Way') statusColor = '#9b59b6';
+                    if (order.status === 'Delivered') statusColor = '#2ecc71';
+                    if (order.status === 'Cancelled') statusColor = '#e74c3c';
                     const statusText = order.status || 'Pending';
                     const dateText = new Date(order.createdAt).toLocaleDateString();
-
                     list.innerHTML += `
                         <div style="border: 1px solid #eee; border-radius: 8px; padding: 15px; background: #fafafa; text-align: left;">
                             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
