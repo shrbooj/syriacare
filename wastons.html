@@ -39,7 +39,7 @@
     /* ── ANIMATED HERO WITH BACKGROUND VIDEO ── */
     .hero { position: relative; overflow: hidden; color: white; text-align: center; padding: 3.5rem 1rem; min-height: 220px; display: flex; flex-direction: column; justify-content: center; align-items: center; }
     .hero-video { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; z-index: 0; }
-    .hero-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(135deg, rgba(0), rgba(05)); z-index: 1; }
+    .hero-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.3); z-index: 1; }
     .hero-content { position: relative; z-index: 2; width: 100%; }
     
     .hero-title-container { height: 2rem; margin-bottom: 1rem; position: relative; width: 100%; overflow: hidden; }
@@ -108,6 +108,18 @@
     .page-btn:hover:not(:disabled) { background: var(--primary); color: white; transform: translateY(-2px); box-shadow: 0 4px 8px rgba(74, 20, 140, 0.2);}
     .page-btn.active { background: var(--primary); color: white; box-shadow: 0 4px 8px rgba(74, 20, 140, 0.3);}
     .page-btn:disabled { border-color: #ddd; color: #aaa; cursor: not-allowed; background: #f9f9f9; box-shadow: none; transform: none;}
+    
+    /* Loader CSS */
+    .loader {
+        border: 4px solid rgba(0,0,0,0.1);
+        border-left-color: var(--primary);
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        animation: spin 1s linear infinite;
+        margin: 0 auto;
+    }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     
     @media (max-width: 600px) {
         header { flex-direction: column; padding: 15px 5%; gap: 15px; align-items: stretch; }
@@ -335,6 +347,8 @@
         const PRODUCTS_PER_PAGE = 24;
         let currentLang = localStorage.getItem('syriaCareLang') || 'en';
         
+        let isLoadingProducts = true; // 🟢 FIX: This flag locks the loading spinner
+        
         const arabicCats = {
             'Makeup': 'مكياج', 'Skin Care': 'العناية بالبشرة', 'Hair Care': 'العناية بالشعر',
             'Perfume & Deodorant': 'عطور', 'Personal Care': 'العناية الشخصية', 'Electrical Products': 'كهربائيات',
@@ -485,15 +499,41 @@
         function switchModals(closeId, openId) { toggleModal(closeId); toggleModal(openId); }
 
         async function fetchProductsFromCloud() {
+            isLoadingProducts = true; // 🟢 FIX: Lock the grid 
             const grid = document.getElementById('product-grid');
+            
+            // 1. Show a beautiful loading state FIRST while we wait for Render to wake up
+            if (grid) {
+                grid.innerHTML = `
+                    <div style="grid-column: 1 / -1; text-align: center; padding: 40px;">
+                        <div class="loader"></div>
+                        <p style="color: var(--primary); font-weight: bold; margin-top: 15px; font-size: 1.1rem;">
+                            ${currentLang === 'ar' ? 'جاري تحميل المنتجات... الرجاء الانتظار قليلاً ⏳' : 'Loading products... Please wait a moment ⏳'}
+                        </p>
+                    </div>`;
+            }
+
             try {
                 const response = await fetch(`${API_URL}/products`); 
                 if (!response.ok) throw new Error("Connection failed");
                 products = await response.json();
+                isLoadingProducts = false; // 🟢 FIX: Unlock the grid
                 renderProducts(); 
             } catch (error) {
+                isLoadingProducts = false;
                 console.error("🔴 Database Error:", error);
-                if (grid) grid.innerHTML = `<p id="loading-message" style="color: #e74c3c;">🔴 Server Offline. Check Connection.</p>`;
+                // 2. Show a friendly error with a "Try Again" button if it completely fails
+                if (grid) {
+                    grid.innerHTML = `
+                        <div style="grid-column: 1 / -1; text-align: center; padding: 40px;">
+                            <p style="color: #e74c3c; font-weight: bold; font-size: 1.1rem;">
+                                ${currentLang === 'ar' ? '🔴 الخادم غير متصل مؤقتاً. يرجى إعادة المحاولة.' : '🔴 Server is temporarily asleep. Please try again.'}
+                            </p>
+                            <button class="btn-primary" style="width: auto; padding: 10px 20px; margin-top: 10px;" onclick="fetchProductsFromCloud()">
+                                ${currentLang === 'ar' ? '🔄 إعادة المحاولة' : '🔄 Try Again'}
+                            </button>
+                        </div>`;
+                }
             }
         }
 
@@ -520,6 +560,9 @@
         }
 
         function renderProducts() {
+            // 🟢 FIX: If still fetching, STOP so the language refresh doesn't erase the loading spinner!
+            if (isLoadingProducts) return; 
+
             const grid = document.getElementById('product-grid');
             if (!grid) return;
 
