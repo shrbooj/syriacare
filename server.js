@@ -15,13 +15,14 @@ const MONGO_URI = "mongodb+srv://karimlaham232_db_user:karim.1234@cluster0.rcrmt
 // SCHEMAS (Database Structure)
 // ==========================================
 const productSchema = new mongoose.Schema({
-    id: String,
+    id: String, 
     name: String,
     category: String,
     store: String,
     image: String,
     priceUSD: Number,
-    originalTRY: Number
+    originalTRY: Number,
+    description: String // Added description here to ensure it saves!
 });
 const Product = mongoose.model('Product', productSchema);
 
@@ -32,7 +33,7 @@ const orderSchema = new mongoose.Schema({
     location: String,
     items: Array,
     total: Number,
-    status: { type: String, default: 'Pending' }, // <--- THIS SAVES THE STATUS
+    status: { type: String, default: 'Pending' }, 
     date: { type: Date, default: Date.now }
 });
 const Order = mongoose.model('Order', orderSchema);
@@ -62,11 +63,14 @@ app.post('/api/products', async (req, res) => {
     }
 });
 
-// UPDATE product
+// 🟢 FIXED: UPDATE product (Now checks for both _id and id)
 app.put('/api/products/:id', async (req, res) => {
     try {
+        const isValidObjectId = mongoose.Types.ObjectId.isValid(req.params.id);
+        const query = isValidObjectId ? { _id: req.params.id } : { id: req.params.id };
+
         const updatedProduct = await Product.findOneAndUpdate(
-            { id: req.params.id },
+            query,
             { $set: req.body },
             { new: true }
         );
@@ -76,10 +80,13 @@ app.put('/api/products/:id', async (req, res) => {
     }
 });
 
-// DELETE product
+// 🟢 FIXED: DELETE product (Now checks for both _id and id)
 app.delete('/api/products/:id', async (req, res) => {
     try {
-        await Product.deleteOne({ id: req.params.id });
+        const isValidObjectId = mongoose.Types.ObjectId.isValid(req.params.id);
+        const query = isValidObjectId ? { _id: req.params.id } : { id: req.params.id };
+
+        await Product.deleteOne(query);
         res.json({ success: true });
     } catch (error) {
         res.status(500).json({ error: "Failed to delete" });
@@ -107,7 +114,7 @@ app.get('/api/orders', async (req, res) => {
     }
 });
 
-// GET orders by phone number (Fixes the "Error loading orders" in user cart)
+// GET orders by phone number
 app.get('/api/orders/phone/:phone', async (req, res) => {
     try {
         const userOrders = await Order.find({ phone: req.params.phone }).sort({ date: -1 });
@@ -117,7 +124,7 @@ app.get('/api/orders/phone/:phone', async (req, res) => {
     }
 });
 
-// UPDATE order status (Fixes the admin panel resetting)
+// UPDATE order status 
 app.put('/api/orders/:id', async (req, res) => {
     try {
         const updatedOrder = await Order.findByIdAndUpdate(
