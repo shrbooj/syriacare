@@ -15,7 +15,7 @@ const MONGO_URI = "mongodb+srv://karimlaham232_db_user:karim.1234@cluster0.rcrmt
 // SCHEMAS (Database Structure)
 // ==========================================
 const productSchema = new mongoose.Schema({
-    id: String, // Changed to String to match your Date.now().toString() logic
+    id: String,
     name: String,
     category: String,
     store: String,
@@ -32,7 +32,7 @@ const orderSchema = new mongoose.Schema({
     location: String,
     items: Array,
     total: Number,
-    status: { type: String, default: 'Pending' }, // 🟢 ADDED: Tracks the order status
+    status: { type: String, default: 'Pending' }, // <--- THIS SAVES THE STATUS
     date: { type: Date, default: Date.now }
 });
 const Order = mongoose.model('Order', orderSchema);
@@ -107,7 +107,17 @@ app.get('/api/orders', async (req, res) => {
     }
 });
 
-// 🟢 ADDED: UPDATE order status route
+// GET orders by phone number (Fixes the "Error loading orders" in user cart)
+app.get('/api/orders/phone/:phone', async (req, res) => {
+    try {
+        const userOrders = await Order.find({ phone: req.params.phone }).sort({ date: -1 });
+        res.json(userOrders);
+    } catch (error) {
+        res.status(500).json({ error: "Failed to fetch user orders" });
+    }
+});
+
+// UPDATE order status (Fixes the admin panel resetting)
 app.put('/api/orders/:id', async (req, res) => {
     try {
         const updatedOrder = await Order.findByIdAndUpdate(
