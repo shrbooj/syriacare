@@ -6,10 +6,7 @@ const app = express();
 app.use(cors()); 
 app.use('/images', express.static('images'));
 app.use(express.static(__dirname));
-
-// FIX 1: Increased limit to 50mb so PC images don't crash the server!
-app.use(express.json({ limit: '50mb' })); 
-app.use(express.urlencoded({ limit: '50mb', extended: true }));
+app.use(express.json({ limit: '10mb' })); 
 
 /// This is your unique cloud key
 const MONGO_URI = "mongodb+srv://karimlaham232_db_user:karim.1234@cluster0.rcrmtnz.mongodb.net/syriacare?retryWrites=true&w=majority";
@@ -18,14 +15,13 @@ const MONGO_URI = "mongodb+srv://karimlaham232_db_user:karim.1234@cluster0.rcrmt
 // SCHEMAS (Database Structure)
 // ==========================================
 const productSchema = new mongoose.Schema({
-    id: String, 
+    id: String, // Changed to String to match your Date.now().toString() logic
     name: String,
     category: String,
     store: String,
     image: String,
     priceUSD: Number,
-    originalTRY: Number,
-    description: String // Added description so it saves properly!
+    originalTRY: Number
 });
 const Product = mongoose.model('Product', productSchema);
 
@@ -36,8 +32,7 @@ const orderSchema = new mongoose.Schema({
     location: String,
     items: Array,
     total: Number,
-    status: { type: String, default: 'Pending' }, // Required for Admin dropdown
-    createdAt: { type: Date, default: Date.now }, // Required for sorting
+    status: { type: String, default: 'Pending' }, // 🟢 ADDED: Tracks the order status
     date: { type: Date, default: Date.now }
 });
 const Order = mongoose.model('Order', orderSchema);
@@ -67,25 +62,24 @@ app.post('/api/products', async (req, res) => {
     }
 });
 
-// FIX 2: UPDATE product using MongoDB's true _id
+// UPDATE product
 app.put('/api/products/:id', async (req, res) => {
     try {
-        const updatedProduct = await Product.findByIdAndUpdate(
-            req.params.id, 
+        const updatedProduct = await Product.findOneAndUpdate(
+            { id: req.params.id },
             { $set: req.body },
             { new: true }
         );
         res.json({ success: true, product: updatedProduct });
     } catch (error) {
-        console.error("Update Error:", error);
         res.status(500).json({ error: "Failed to update" });
     }
 });
 
-// FIX 3: DELETE product using MongoDB's true _id
+// DELETE product
 app.delete('/api/products/:id', async (req, res) => {
     try {
-        await Product.findByIdAndDelete(req.params.id);
+        await Product.deleteOne({ id: req.params.id });
         res.json({ success: true });
     } catch (error) {
         res.status(500).json({ error: "Failed to delete" });
@@ -106,34 +100,24 @@ app.post('/api/orders', async (req, res) => {
 // GET all orders
 app.get('/api/orders', async (req, res) => {
     try {
-        const orders = await Order.find().sort({ createdAt: -1, date: -1 });
+        const orders = await Order.find().sort({ date: -1 });
         res.json(orders);
     } catch (error) {
         res.status(500).json({ error: "Failed to fetch orders" });
     }
 });
 
-// FIX 4: UPDATE Order Status (Triggered by Admin Dropdown)
-app.patch('/api/orders/:id/status', async (req, res) => {
+// 🟢 ADDED: UPDATE order status route
+app.put('/api/orders/:id', async (req, res) => {
     try {
         const updatedOrder = await Order.findByIdAndUpdate(
             req.params.id,
-            { status: req.body.status },
+            { $set: { status: req.body.status } },
             { new: true }
         );
         res.json({ success: true, order: updatedOrder });
     } catch (error) {
         res.status(500).json({ error: "Failed to update order status" });
-    }
-});
-
-// FIX 5: GET Orders by Phone Number (For the User's "My Orders" tab)
-app.get('/api/orders/phone/:phone', async (req, res) => {
-    try {
-        const orders = await Order.find({ phone: req.params.phone }).sort({ createdAt: -1, date: -1 });
-        res.json(orders);
-    } catch (error) {
-        res.status(500).json({ error: "Failed to fetch user orders" });
     }
 });
 
