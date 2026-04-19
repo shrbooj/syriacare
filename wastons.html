@@ -4,144 +4,161 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SyriaCare Express</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
     <style>
     :root { --primary: #4a148c; --secondary: #009688; --bg: #f8f9fa; --text: #333; }
-    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; background-color: var(--bg); color: var(--text); transition: 0.3s; }
-    button { touch-action: manipulation; }
+    body { font-family: 'Nunito', 'Segoe UI', Tahoma, sans-serif; margin: 0; padding: 0; background-color: var(--bg); color: var(--text); transition: 0.3s; }
+    button { touch-action: manipulation; font-family: inherit; }
    
-    header { background-color: white; padding: 1rem 5%; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 1000; box-shadow: 0 2px 10px rgba(0,0,0,0.08); flex-wrap: wrap; gap: 15px;}
-    .logo { font-size: 1.5rem; font-weight: bold; text-decoration: none; display: flex; align-items: center; gap: 12px; }
+    /* ── HEADER ── */
+    header { background-color: white; padding: 12px 5%; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 1000; box-shadow: 0 2px 10px rgba(0,0,0,0.06); flex-wrap: wrap; gap: 15px;}
+    .logo { font-size: 1.5rem; font-weight: 900; text-decoration: none; display: flex; align-items: center; gap: 10px; }
+    .logo img { height: 40px; border-radius: 8px; }
     .logo span:nth-child(1) { color: var(--primary); }
     .logo span:nth-child(2) { color: var(--secondary); }
     
     .controls { display: flex; gap: 12px; align-items: center; flex-wrap: wrap;}
-    select { padding: 8px 12px; border: 1px solid #ddd; border-radius: 8px; cursor: pointer; font-size: 0.95rem; font-family: inherit; outline: none; transition: 0.2s; height: 38px; box-sizing: border-box;}
+    select { padding: 8px 12px; border: 1.5px solid #eaeaea; border-radius: 8px; cursor: pointer; font-size: 0.9rem; font-weight: 700; font-family: inherit; outline: none; transition: 0.2s; height: 38px; box-sizing: border-box; background: white;}
     
-    .custom-dropdown { position: relative; font-family: inherit; font-size: 0.95rem; user-select: none;}
-    .selected-lang { display: flex; align-items: center; gap: 8px; border: 1px solid #ddd; padding: 6px 12px; border-radius: 8px; cursor: pointer; background: white; transition: 0.2s; height: 38px; box-sizing: border-box;}
+    .custom-dropdown { position: relative; font-family: inherit; font-size: 0.9rem; font-weight: 700; user-select: none;}
+    .selected-lang { display: flex; align-items: center; gap: 8px; border: 1.5px solid #eaeaea; padding: 6px 12px; border-radius: 8px; cursor: pointer; background: white; transition: 0.2s; height: 38px; box-sizing: border-box;}
     .lang-menu { position: absolute; top: 110%; right: 0; background: white; border: 1px solid #eee; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); display: none; flex-direction: column; overflow: hidden; z-index: 1001; min-width: 120px;}
-    .lang-option { display: flex; align-items: center; gap: 8px; padding: 10px 12px; cursor: pointer; transition: 0.2s; }
+    .lang-option { display: flex; align-items: center; gap: 8px; padding: 10px 12px; cursor: pointer; transition: 0.2s; font-weight: 600; }
+    .lang-option:hover { background: #f9f9f9; }
     
-    .search-box { display: flex; align-items: center; background: #f1f3f5; border-radius: 20px; padding: 6px 15px; border: 1px solid #e9ecef; transition: 0.3s; height: 38px; box-sizing: border-box;}
-    .search-box input { border: none; background: transparent; outline: none; font-family: inherit; font-size: 0.95rem; width: 140px; transition: 0.3s;}
+    .search-box { display: flex; align-items: center; background: white; border-radius: 20px; padding: 6px 15px; border: 1.5px solid #eaeaea; transition: 0.3s; height: 38px; box-sizing: border-box;}
+    .search-box input { border: none; background: transparent; outline: none; font-family: inherit; font-size: 0.9rem; width: 160px; transition: 0.3s; font-weight: 600;}
+    .search-box input::placeholder { color: #aaa; font-weight: 600; }
     
-    .btn-header-auth { background: white; color: var(--primary); border: 2px solid var(--primary); padding: 8px 18px; font-weight: bold; border-radius: 20px; transition: all 0.3s ease; display: flex; align-items: center; gap: 6px; height: 38px; box-sizing: border-box;}
-    .btn-header-auth:hover { background: var(--primary); color: white; box-shadow: 0 4px 10px rgba(74, 20, 140, 0.2); transform: translateY(-1px); }
+    .auth-stack { display: flex; flex-direction: column; gap: 6px; }
+    .btn-header-auth { background: white; color: var(--primary); border: 1.5px solid var(--primary); padding: 4px 16px; font-weight: 800; font-size: 0.85rem; border-radius: 20px; transition: all 0.2s ease; display: flex; align-items: center; justify-content: center; gap: 6px; height: 30px; box-sizing: border-box; cursor: pointer;}
+    .btn-header-auth:hover { background: #f4edf9; }
     
-    .btn-cart { background: linear-gradient(135deg, var(--secondary), #1abc9c); color: white; border: none; padding: 8px 18px; font-weight: bold; border-radius: 20px; height: 38px; box-sizing: border-box; transition: 0.3s;}
+    .btn-cart { background: var(--secondary); color: white; border: none; padding: 8px 20px; font-weight: 800; font-size: 0.95rem; border-radius: 20px; height: 38px; box-sizing: border-box; transition: 0.2s; cursor: pointer; display: flex; align-items: center; gap: 6px;}
+    .btn-cart:hover { filter: brightness(1.1); transform: translateY(-1px); box-shadow: 0 4px 10px rgba(0,150,136,0.3); }
 
-    .btn-primary { background: linear-gradient(135deg, var(--primary), #7c43bd); color: white; border: none; width: 100%; padding: 12px; font-weight: bold; margin-top: 10px; border-radius: 8px; box-shadow: 0 4px 15px rgba(74, 20, 140, 0.25); transition: all 0.3s ease; font-size: 1.05rem; }
+    .btn-primary { background: linear-gradient(135deg, var(--primary), #7c43bd); color: white; border: none; width: 100%; padding: 12px; font-weight: 800; margin-top: 10px; border-radius: 8px; box-shadow: 0 4px 15px rgba(74, 20, 140, 0.25); transition: all 0.3s ease; font-size: 1.05rem; cursor: pointer;}
     .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(74, 20, 140, 0.4); }
     
-    .btn-outline { background: transparent; color: var(--primary); border: 2px solid var(--primary); width: 100%; padding: 10px; font-weight: bold; border-radius: 8px; transition: all 0.3s ease; margin-top: 10px;}
+    .btn-outline { background: transparent; color: var(--primary); border: 2px solid var(--primary); width: 100%; padding: 10px; font-weight: 800; border-radius: 8px; transition: all 0.3s ease; margin-top: 10px; cursor: pointer;}
     .btn-outline:hover { background: rgba(74, 20, 140, 0.05); transform: translateY(-1px); }
 
-    /* ── ANIMATED HERO WITH BACKGROUND VIDEO ── */
+    /* ── HERO ── */
     .hero { position: relative; overflow: hidden; color: white; text-align: center; padding: 3.5rem 1rem; min-height: 220px; display: flex; flex-direction: column; justify-content: center; align-items: center; }
     .hero-video { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; z-index: 0; }
     .hero-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.3); z-index: 1; }
     .hero-content { position: relative; z-index: 2; width: 100%; }
-    
     .hero-title-container { height: 2rem; margin-bottom: 1rem; position: relative; width: 100%; overflow: hidden; }
-    .hero h1 { font-size: 1.8rem; margin: 0; transition: opacity 0.5s, transform 0.5s; position: absolute; width: 100%; left: 0; text-shadow: 0 2px 5px rgba(0,0,0,0.3); }
-    .hero p { font-size: 1.1rem; opacity: 0.95; margin: 0; transition: opacity 0.5s; text-shadow: 0 2px 5px rgba(0,0,0,0.3); }
+    .hero h1 { font-size: 1.8rem; font-weight: 900; margin: 0; transition: opacity 0.5s, transform 0.5s; position: absolute; width: 100%; left: 0; text-shadow: 0 2px 8px rgba(0,0,0,0.5); }
+    .hero p { font-size: 1.1rem; font-weight: 700; opacity: 0.95; margin: 0; transition: opacity 0.5s; text-shadow: 0 2px 8px rgba(0,0,0,0.5); }
     .fade-out { opacity: 0; transform: translateY(-20px); }
     .fade-in { opacity: 1; transform: translateY(0); }
 
+    /* ── CATEGORIES ── */
     .shop-by-category { padding: 2rem 5%; text-align: center; background: white; }
-    .category-grid-visual { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-top: 25px; }
-    .cat-card { position: relative; border-radius: 12px; overflow: hidden; cursor: pointer; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
-    .cat-card img { width: 100%; height: 150px; object-fit: cover; filter: brightness(0.75); display: block; }
-    .cat-title { position: absolute; bottom: 0; left: 0; right: 0; background: linear-gradient(transparent, rgba(0,0,0,0.9)); color: white; padding: 15px 5px 5px 5px; font-size: 1rem; font-weight: bold; }
+    .category-grid-visual { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 12px; margin-top: 20px; }
+    .cat-card { position: relative; border-radius: 12px; overflow: hidden; cursor: pointer; box-shadow: 0 4px 8px rgba(0,0,0,0.08); transition: 0.2s; }
+    .cat-card:hover { transform: translateY(-3px); box-shadow: 0 6px 15px rgba(0,0,0,0.15); }
+    .cat-card img { width: 100%; height: 120px; object-fit: cover; filter: brightness(0.7); display: block; }
+    .cat-title { position: absolute; bottom: 0; left: 0; right: 0; background: linear-gradient(transparent, rgba(0,0,0,0.9)); color: white; padding: 15px 5px 8px 5px; font-size: 0.95rem; font-weight: 800; }
 
+    /* ── PRODUCTS ── */
     .container { padding: 2rem 5%; }
-    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 20px; margin-top: 20px; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 15px; margin-top: 20px; }
     
-    .card { background: white; border-radius: 12px; padding: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.06); text-align: center; display: flex; flex-direction: column; justify-content: space-between; border: 1px solid #eee; transition: 0.3s;}
-    .card:hover { transform: translateY(-5px); box-shadow: 0 8px 20px rgba(0,0,0,0.1); }
+    .card { background: white; border-radius: 14px; padding: 18px; box-shadow: 0 2px 10px rgba(0,0,0,0.04); text-align: center; display: flex; flex-direction: column; justify-content: space-between; border: 1px solid #f0f0f0; transition: 0.3s;}
+    .card:hover { transform: translateY(-4px); box-shadow: 0 8px 20px rgba(74,20,140,0.08); border-color: #eaddf4; }
     
-    .card h3 { font-size: 1rem; height: 60px; overflow: hidden; margin: 10px 0; line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; }
+    .card h3 { font-size: 0.95rem; font-weight: 800; height: 42px; overflow: hidden; margin: 10px 0; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; color: #222;}
 
-    .price-box { display: flex; border: 1px solid #f0e6f7; border-radius: 8px; margin-top: 10px; overflow: hidden; height: 40px; }
-    .price-amount { flex: 1; display: flex; align-items: center; justify-content: center; background: #faf5ff; color: var(--primary); font-weight: bold; }
-    .price-add-btn { background: var(--primary); color: white; border: none; width: 40px; font-size: 1.5rem; cursor: pointer; }
+    .btn-details { background: white; color: var(--primary); border: 1.5px solid var(--primary); width: 100%; padding: 8px; font-weight: 800; border-radius: 8px; transition: 0.2s; margin-bottom: 12px; cursor: pointer; font-size: 0.85rem; display: flex; justify-content: center; align-items: center; gap: 6px; }
+    .btn-details:hover { background: #f4edf9; }
 
-    .original-price { color: #777; text-decoration: line-through; text-decoration-color: #e74c3c; text-decoration-thickness: 2px; font-size: 0.85rem; margin: 5px 0; }
+    .original-price { color: #888; font-size: 0.8rem; font-weight: 700; margin: 0 0 6px 0; text-align: center; }
+    .original-price span { text-decoration: line-through; text-decoration-color: #e74c3c; text-decoration-thickness: 2px; }
 
+    .price-box { display: flex; border-radius: 8px; overflow: hidden; height: 42px; }
+    .price-amount { flex: 1; display: flex; align-items: center; justify-content: center; background: #f4edf9; color: var(--primary); font-weight: 900; font-size: 1.05rem; }
+    .price-add-btn { background: var(--primary); color: white; border: none; width: 48px; font-size: 1.4rem; font-weight: bold; cursor: pointer; display: flex; justify-content: center; align-items: center; transition: 0.2s; }
+    .price-add-btn:hover { filter: brightness(1.15); }
+
+    /* ── PAGINATION ── */
+    .pagination { display: flex; justify-content: center; align-items: center; gap: 6px; margin-top: 40px; flex-wrap: wrap; }
+    .page-btn { padding: 0 14px; height: 38px; border: 1.5px solid #eaddf4; background: white; color: var(--primary); font-weight: 800; font-size: 0.9rem; border-radius: 8px; cursor: pointer; transition: 0.2s; display: flex; justify-content: center; align-items: center; }
+    .page-btn.square { padding: 0; width: 38px; }
+    .page-btn:hover:not(:disabled) { background: #f4edf9; border-color: var(--primary); }
+    .page-btn.active { background: var(--primary); color: white; border-color: var(--primary); box-shadow: 0 4px 8px rgba(74, 20, 140, 0.25);}
+    .page-btn:disabled { border-color: #eee; color: #ccc; cursor: not-allowed; background: #fafafa; }
+
+    /* ── CART ITEM ── */
     .cart-item { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid #eee; text-align: left; }
     .cart-item img { width: 50px; height: 50px; object-fit: contain; border-radius: 4px; background: #f9f9f9; }
     .cart-item-info { flex: 1; }
-    .cart-item-name { font-size: 0.9rem; font-weight: 600; margin: 0; line-height: 1.2; }
-    .cart-item-price { font-size: 0.85rem; color: var(--primary); margin: 3px 0 0 0; }
+    .cart-item-name { font-size: 0.9rem; font-weight: 800; margin: 0; line-height: 1.2; color: #222; }
     
-    .btn-details { background: transparent; color: var(--primary); border: 1px solid var(--primary); width: 100%; padding: 6px; font-weight: 600; border-radius: 6px; transition: 0.2s; margin-bottom: 10px; cursor: pointer; font-size: 0.85rem; }
-    .btn-details:hover { background: rgba(74, 20, 140, 0.08); }
-    
-    .product-inline-desc { display: none; background: #f4edf9; padding: 15px; border-radius: 8px; font-size: 0.95rem; color: #444; text-align: start; border: 1px solid #eaddf4; line-height: 1.6; animation: fadeIn 0.3s ease-in-out; }
+    .product-inline-desc { display: none; background: #f4edf9; padding: 15px; border-radius: 8px; font-size: 0.9rem; font-weight: 600; color: #444; text-align: start; border: 1px solid #eaddf4; line-height: 1.6; animation: fadeIn 0.3s ease-in-out; }
     @keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
 
     .product-detail-img { width: 100%; max-height: 250px; object-fit: contain; border-radius: 8px; margin-bottom: 15px; }
-    .product-detail-name { font-size: 1.2rem; margin: 0 0 10px 0; color: var(--primary); line-height: 1.3; }
-    .product-detail-price { font-size: 1.3rem; font-weight: bold; color: var(--secondary); margin-bottom: 15px; }
+    .product-detail-name { font-size: 1.2rem; font-weight: 900; margin: 0 0 10px 0; color: var(--primary); line-height: 1.3; }
+    .product-detail-price { font-size: 1.3rem; font-weight: 900; color: var(--secondary); margin-bottom: 15px; }
 
-    #toast { visibility: hidden; min-width: 250px; background-color: var(--secondary); color: #fff; text-align: center; border-radius: 30px; padding: 14px; position: fixed; z-index: 3000; left: 50%; bottom: 30px; transform: translateX(-50%); font-weight: bold; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
-    #toast.show { visibility: visible; animation: fadein 0.5s, fadeout 0.5s 2.5s; }
+    /* ── TOAST & MODAL ── */
+    #toast { visibility: hidden; min-width: 250px; background-color: var(--secondary); color: #fff; text-align: center; border-radius: 30px; padding: 14px; position: fixed; z-index: 3000; left: 50%; bottom: 30px; transform: translateX(-50%); font-weight: 800; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
+    #toast.show { visibility: visible; animation: fadein 0.3s, fadeout 0.3s 2.5s; }
     @keyframes fadein { from {bottom: 0; opacity: 0;} to {bottom: 30px; opacity: 1;} }
     @keyframes fadeout { from {bottom: 30px; opacity: 1;} to {bottom: 0; opacity: 0;} }
 
-    .modal { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6); z-index: 2000; justify-content: center; align-items: center; backdrop-filter: blur(4px); }
-    .modal-content { background: white; padding: 30px; border-radius: 16px; width: 90%; max-width: 420px; box-shadow: 0 20px 40px rgba(0,0,0,0.2); animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+    .modal { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 2000; justify-content: center; align-items: center; backdrop-filter: blur(3px); }
+    .modal-content { background: white; padding: 30px; border-radius: 16px; width: 90%; max-width: 420px; box-shadow: 0 20px 40px rgba(0,0,0,0.15); animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
     @keyframes popIn { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
     
     .modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #f1f1f1; padding-bottom: 12px; margin-bottom: 20px; }
-    .modal-header h3 { margin: 0; color: var(--primary); font-size: 1.4rem;}
-    .close-btn { background: #f1f1f1; border: none; font-size: 1.2rem; color: #555; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: 0.2s; cursor: pointer;}
+    .modal-header h3 { margin: 0; color: var(--primary); font-size: 1.3rem; font-weight: 900;}
+    .close-btn { background: #f1f1f1; border: none; font-size: 1.2rem; color: #555; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: 0.2s; cursor: pointer; font-weight: bold;}
     .close-btn:hover { background: #e0e0e0; transform: rotate(90deg);}
 
     .form-group { margin-bottom: 15px; text-align: start; }
-    .form-group label { display: block; margin-bottom: 6px; font-weight: 600; font-size: 0.9rem; color: #444;}
-    .form-group input { width: 100%; padding: 12px; border: 2px solid #eee; border-radius: 8px; box-sizing: border-box; font-family: inherit; transition: 0.2s; outline: none; background: #fafafa;}
+    .form-group label { display: block; margin-bottom: 6px; font-weight: 800; font-size: 0.85rem; color: #555;}
+    .form-group input { width: 100%; padding: 12px; border: 2px solid #eee; border-radius: 8px; box-sizing: border-box; font-family: inherit; transition: 0.2s; outline: none; background: #fafafa; font-weight: 600;}
     .form-group input:focus { border-color: var(--primary); background: white;}
 
-    .pagination { display: flex; justify-content: center; align-items: center; gap: 8px; margin-top: 40px; flex-wrap: wrap; }
-    .page-btn { padding: 8px 16px; border: 2px solid var(--primary); background: white; color: var(--primary); font-weight: bold; border-radius: 8px; cursor: pointer; transition: 0.2s; }
-    .page-btn:hover:not(:disabled) { background: var(--primary); color: white; transform: translateY(-2px); box-shadow: 0 4px 8px rgba(74, 20, 140, 0.2);}
-    .page-btn.active { background: var(--primary); color: white; box-shadow: 0 4px 8px rgba(74, 20, 140, 0.3);}
-    .page-btn:disabled { border-color: #ddd; color: #aaa; cursor: not-allowed; background: #f9f9f9; box-shadow: none; transform: none;}
-    
     /* Loader CSS */
-    .loader {
-        border: 4px solid rgba(0,0,0,0.1);
-        border-left-color: var(--primary);
-        border-radius: 50%;
-        width: 40px;
-        height: 40px;
-        animation: spin 1s linear infinite;
-        margin: 0 auto;
-    }
+    .loader { border: 4px solid rgba(0,0,0,0.05); border-left-color: var(--primary); border-radius: 50%; width: 35px; height: 35px; animation: spin 1s linear infinite; margin: 0 auto; }
     @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     
+    /* ── MOBILE RESPONSIVE (MATCHING SCREENSHOT) ── */
     @media (max-width: 600px) {
-        header { flex-direction: column; padding: 15px 5%; gap: 15px; align-items: stretch; }
+        header { flex-direction: column; padding: 15px 4%; gap: 12px; align-items: stretch; }
         .logo { justify-content: center; width: 100%; margin: 0; }
-        .controls { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%; }
-        .search-box { grid-column: span 2; width: 100%; justify-content: space-between; }
+        .controls { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; width: 100%; }
+        .search-box { grid-column: span 2; width: 100%; justify-content: space-between; border-radius: 20px; }
         .search-box input { width: 100%; flex: 1; }
-        #auth-controls { grid-column: span 2; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; width: 100%; }
-        .user-greeting { width: 100%; text-align: center; font-weight: bold; margin: 0 0 5px 0; display: block; font-size: 1rem; color: var(--primary); }
-        .btn-header-auth { flex: 1; justify-content: center; font-size: 0.85rem; padding: 8px; height: auto; text-align: center; }
-        .custom-dropdown, #currency-toggle { width: 100%; }
-        .selected-lang { justify-content: center; }
-        .btn-cart { grid-column: span 2; width: 100%; justify-content: center; display: flex; align-items: center; padding: 10px; }
+        #auth-controls { grid-column: span 2; width: 100%; }
+        .auth-stack { flex-direction: row; width: 100%; gap: 8px; }
+        .btn-header-auth { flex: 1; border-radius: 20px; height: 38px; font-size: 0.95rem; border-width: 1.5px; }
+        .custom-dropdown, #currency-toggle { grid-column: span 1; width: 100%; border-radius: 20px;}
+        .selected-lang { justify-content: center; border-radius: 20px; height: 38px; }
+        #currency-toggle { height: 38px; }
+        .btn-cart { grid-column: span 2; width: 100%; justify-content: center; border-radius: 20px; padding: 10px; font-size: 0.95rem; }
+        
         .grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
         .container { padding: 1rem 3%; }
-        .card { padding: 10px; }
-        .card h3 { font-size: 0.85rem; line-height: 1.3; height: 55px; margin: 5px 0 10px 0; display: -webkit-box; -webkit-line-clamp: 3; line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
-        .card img { height: 110px !important; }
-        .price-amount { font-size: 0.85rem; }
+        .card { padding: 12px; }
+        .card h3 { font-size: 0.85rem; height: 38px; margin: 8px 0; }
+        .btn-details { padding: 6px; font-size: 0.8rem; margin-bottom: 8px; }
+        .original-price { font-size: 0.75rem; margin-bottom: 4px; }
+        .price-box { height: 36px; }
+        .price-amount { font-size: 0.9rem; padding: 5px; }
+        .price-add-btn { width: 40px; font-size: 1.2rem; }
+        
         .category-grid-visual { grid-template-columns: repeat(2, 1fr); gap: 10px; }
-        .cat-card img { height: 110px; }
+        .cat-card img { height: 100px; }
         input, select, textarea { font-size: 16px !important; }
+        .pagination { gap: 5px; }
+        .page-btn { padding: 0 10px; font-size: 0.85rem; height: 34px;}
+        .page-btn.square { width: 34px; }
     }
     </style>
 </head>
@@ -149,27 +166,27 @@
 
     <header>
         <a href="#" class="logo" onclick="filterCategory('All')">
-            <img src="syriacare express.jfif" alt="Logo" style="height: 45px; border-radius: 8px;" onerror="this.style.display='none'">
+            <img src="syriacare express.jfif" alt="Logo" onerror="this.style.display='none'">
             <div><span>SyriaCare</span><span>Express</span></div>
         </a>
         <div class="controls">
             <div class="search-box">
                 <input type="text" id="search-input" onkeyup="handleSearch()" data-placeholder-en="Search products..." data-placeholder-ar="بحث عن منتج...">
-                <span style="opacity: 0.5;">🔍</span>
+                <span style="opacity: 0.4;">🔍</span>
             </div>
             <div id="auth-controls"></div>
             <div class="custom-dropdown" id="lang-dropdown">
                 <div class="selected-lang" onclick="toggleLangMenu()">
-                    <img id="current-flag" class="lang-flag" src="https://flagcdn.com/w20/us.png" alt="flag"> 
+                    <img id="current-flag" class="lang-flag" src="https://flagcdn.com/w20/us.png" alt="flag" style="width: 18px; border-radius: 2px;"> 
                     <span id="current-lang-text">English</span>
-                    <span style="font-size: 0.7rem; margin-left: 4px;">▼</span>
+                    <span style="font-size: 0.6rem; margin-left: 2px; color: #555;">▼</span>
                 </div>
                 <div class="lang-menu" id="lang-menu">
                     <div class="lang-option" onclick="switchLanguage('en')">
-                        <img class="lang-flag" src="https://flagcdn.com/w20/us.png" alt="US"> English
+                        <img class="lang-flag" src="https://flagcdn.com/w20/us.png" alt="US" style="width: 18px;"> English
                     </div>
                     <div class="lang-option" onclick="switchLanguage('ar')">
-                        <img class="lang-flag" src="https://flagcdn.com/w20/sa.png" alt="SA"> العربية
+                        <img class="lang-flag" src="https://flagcdn.com/w20/sa.png" alt="SA" style="width: 18px;"> العربية
                     </div>
                 </div>
             </div>
@@ -178,7 +195,8 @@
                 <option value="SYP">SYP (ل.س)</option>
             </select>
             <button class="btn-cart" onclick="toggleModal('cart-modal')">
-                <span data-en="🛒 Cart" data-ar="🛒 السلة">🛒 Cart</span> (<span id="cart-count">0</span>)
+                <span style="opacity: 0.8; font-size: 1.1rem;">🛒</span> 
+                <span data-en="Cart" data-ar="السلة">Cart</span> (<span id="cart-count">0</span>)
             </button>
         </div>
     </header>
@@ -198,7 +216,7 @@
     </div>
 
     <div class="shop-by-category" id="category-section">
-        <h2 data-en="Shop by Category" data-ar="تسوق حسب الفئة">Shop by Category</h2>
+        <h2 data-en="Shop by Category" data-ar="تسوق حسب الفئة" style="font-weight: 900; color: #222;">Shop by Category</h2>
         <div class="category-grid-visual">
             <div class="cat-card" onclick="filterCategory('Makeup')">
                 <img src="https://images.unsplash.com/photo-1596462502278-27bfdc403348?w=500" alt="Makeup">
@@ -236,7 +254,7 @@
     </div>
 
     <div class="container" id="product-anchor">
-        <h2 id="category-title" data-en="Trending Now" data-ar="التوجهات الحالية">Trending Now</h2>
+        <h2 id="category-title" data-en="Trending Now" data-ar="التوجهات الحالية" style="font-weight: 900; color: #222;">Trending Now</h2>
         <div class="grid" id="product-grid"></div>
         <div id="pagination-controls" class="pagination"></div>
     </div>
@@ -258,7 +276,7 @@
                 </div>
                 <button type="submit" class="btn-primary" data-en="Sign In" data-ar="تسجيل الدخول">Sign In</button>
                 <div style="text-align: center; margin-top: 20px; border-top: 1px solid #eee; padding-top: 15px;">
-                    <p style="font-size: 0.9rem; color: #666;" data-en="New here?" data-ar="جديد هنا؟">New here?</p>
+                    <p style="font-size: 0.9rem; color: #666; font-weight: bold;" data-en="New here?" data-ar="جديد هنا؟">New here?</p>
                     <button type="button" class="btn-outline" onclick="switchModals('login-modal', 'register-modal')" data-en="Create Account" data-ar="إنشاء حساب">Create Account</button>
                 </div>
             </form>
@@ -303,8 +321,8 @@
                 <button class="close-btn" onclick="toggleModal('cart-modal')">&times;</button>
             </div>
             <div id="cart-items"></div>
-            <div style="text-align: end; font-size: 1.2rem; font-weight: bold; margin-bottom: 20px; border-top: 2px solid #eee; padding-top: 15px;">
-                <span data-en="Total:" data-ar="المجموع:">Total:</span> <span id="cart-total" style="color: var(--primary);">0</span> <span id="cart-currency" style="color: var(--primary);">USD</span>
+            <div style="text-align: end; font-size: 1.2rem; font-weight: 900; margin-bottom: 20px; border-top: 2px solid #eee; padding-top: 15px;">
+                <span data-en="Total:" data-ar="المجموع:">Total:</span> <span id="cart-total" style="color: var(--primary);">0</span> <span id="cart-currency" style="color: var(--primary); font-size: 1rem;">USD</span>
             </div>
             <button class="btn-primary" onclick="window.location.href='checkout.html'" data-en="Proceed to Checkout" data-ar="إتمام عملية الدفع">Proceed to Checkout</button>
         </div>
@@ -347,7 +365,7 @@
         const PRODUCTS_PER_PAGE = 24;
         let currentLang = localStorage.getItem('syriaCareLang') || 'en';
         
-        let isLoadingProducts = true; // 🟢 FIX: This flag locks the loading spinner
+        let isLoadingProducts = true; 
         
         const arabicCats = {
             'Makeup': 'مكياج', 'Skin Care': 'العناية بالبشرة', 'Hair Care': 'العناية بالشعر',
@@ -355,7 +373,6 @@
             'Solar Products': 'العناية من الشمس', 'Mother & Baby': 'الأم والطفل', 'All': 'التوجهات الحالية'
         };
 
-        // ── HERO ANIMATION LOGIC ──
         const heroData = [
             {
                 en: { title: "Your Favorite Turkish Brands, Delivered to Syria", sub: "Shop directly from Gratis & Watsons. Prices include shipping and customs." },
@@ -375,17 +392,13 @@
         function updateHero() {
             const titleEl = document.getElementById('hero-title');
             const subEl = document.getElementById('hero-sub');
-            
             titleEl.classList.add('fade-out');
             subEl.classList.add('fade-out');
-            
             setTimeout(() => {
                 heroIndex = (heroIndex + 1) % heroData.length;
                 const content = heroData[heroIndex][currentLang];
-                
                 titleEl.innerText = content.title;
                 subEl.innerText = content.sub;
-                
                 titleEl.classList.remove('fade-out');
                 subEl.classList.remove('fade-out');
                 titleEl.classList.add('fade-in');
@@ -428,7 +441,6 @@
             const searchInput = document.getElementById('search-input');
             if (searchInput) searchInput.placeholder = searchInput.getAttribute(`data-placeholder-${lang}`);
             
-            // Sync current hero content immediately on language switch
             const content = heroData[heroIndex][lang];
             document.getElementById('hero-title').innerText = content.title;
             document.getElementById('hero-sub').innerText = content.sub;
@@ -448,14 +460,15 @@
                 const ordersText = currentLang === 'ar' ? 'طلباتي' : 'Orders';
                 
                 authContainer.innerHTML = `
-                    <span class="user-greeting" style="margin-right: 8px;">${greeting}</span>
-                    <button class="btn-header-auth" onclick="openMyOrders()">📦 ${ordersText}</button>
-                    <button class="btn-header-auth" onclick="handleLogout()">${signOutText}</button>
+                    <div class="auth-stack">
+                        <button class="btn-header-auth" onclick="openMyOrders()"><span style="opacity:0.6; font-size: 0.9rem;">📦</span> ${ordersText}</button>
+                        <button class="btn-header-auth" onclick="handleLogout()" style="color: #e74c3c; border-color: #fce4e4; background: #fffaf9;"><span style="opacity:0.6; font-size: 0.9rem;">🚪</span> ${signOutText}</button>
+                    </div>
                 `;
             } else {
                 const signInText = currentLang === 'ar' ? 'تسجيل الدخول' : 'Sign In';
                 authContainer.innerHTML = `
-                    <button class="btn-header-auth" onclick="toggleModal('login-modal')">👤 ${signInText}</button>
+                    <button class="btn-header-auth" onclick="toggleModal('login-modal')" style="height: 38px; padding: 0 24px; font-size: 0.95rem; border-radius: 20px;"><span style="opacity:0.6; font-size: 1.1rem;">👤</span> ${signInText}</button>
                 `;
             }
         }
@@ -499,15 +512,14 @@
         function switchModals(closeId, openId) { toggleModal(closeId); toggleModal(openId); }
 
         async function fetchProductsFromCloud() {
-            isLoadingProducts = true; // 🟢 FIX: Lock the grid 
+            isLoadingProducts = true; 
             const grid = document.getElementById('product-grid');
             
-            // 1. Show a beautiful loading state FIRST while we wait for Render to wake up
             if (grid) {
                 grid.innerHTML = `
-                    <div style="grid-column: 1 / -1; text-align: center; padding: 40px;">
+                    <div style="grid-column: 1 / -1; text-align: center; padding: 50px;">
                         <div class="loader"></div>
-                        <p style="color: var(--primary); font-weight: bold; margin-top: 15px; font-size: 1.1rem;">
+                        <p style="color: var(--primary); font-weight: 800; margin-top: 20px; font-size: 1.05rem;">
                             ${currentLang === 'ar' ? 'جاري تحميل المنتجات... الرجاء الانتظار قليلاً ⏳' : 'Loading products... Please wait a moment ⏳'}
                         </p>
                     </div>`;
@@ -517,19 +529,18 @@
                 const response = await fetch(`${API_URL}/products`); 
                 if (!response.ok) throw new Error("Connection failed");
                 products = await response.json();
-                isLoadingProducts = false; // 🟢 FIX: Unlock the grid
+                isLoadingProducts = false; 
                 renderProducts(); 
             } catch (error) {
                 isLoadingProducts = false;
                 console.error("🔴 Database Error:", error);
-                // 2. Show a friendly error with a "Try Again" button if it completely fails
                 if (grid) {
                     grid.innerHTML = `
                         <div style="grid-column: 1 / -1; text-align: center; padding: 40px;">
-                            <p style="color: #e74c3c; font-weight: bold; font-size: 1.1rem;">
+                            <p style="color: #e74c3c; font-weight: 800; font-size: 1.05rem;">
                                 ${currentLang === 'ar' ? '🔴 الخادم غير متصل مؤقتاً. يرجى إعادة المحاولة.' : '🔴 Server is temporarily asleep. Please try again.'}
                             </p>
-                            <button class="btn-primary" style="width: auto; padding: 10px 20px; margin-top: 10px;" onclick="fetchProductsFromCloud()">
+                            <button class="btn-primary" style="width: auto; padding: 10px 24px; margin-top: 10px; border-radius: 20px;" onclick="fetchProductsFromCloud()">
                                 ${currentLang === 'ar' ? '🔄 إعادة المحاولة' : '🔄 Try Again'}
                             </button>
                         </div>`;
@@ -555,12 +566,11 @@
             
             if(cat !== 'All' && shouldScroll) {
                 const anchor = document.getElementById('product-anchor');
-                if (anchor) anchor.scrollIntoView({ behavior: 'smooth' });
+                if (anchor) anchor.scrollIntoView({ behavior: 'smooth', block: 'start' });
             }
         }
 
         function renderProducts() {
-            // 🟢 FIX: If still fetching, STOP so the language refresh doesn't erase the loading spinner!
             if (isLoadingProducts) return; 
 
             const grid = document.getElementById('product-grid');
@@ -591,7 +601,7 @@
             const watsonsLogo = "watsons-logo.png";
 
             if (paginatedProducts.length === 0) {
-                grid.innerHTML = `<p id="loading-message">${currentLang === 'ar' ? 'لا توجد منتجات.' : 'No products found.'}</p>`;
+                grid.innerHTML = `<p id="loading-message" style="text-align:center; font-weight: 800; color: #888; grid-column: 1/-1;">${currentLang === 'ar' ? 'لا توجد منتجات.' : 'No products found.'}</p>`;
                 renderPaginationControls(0);
                 return;
             }
@@ -599,20 +609,25 @@
             paginatedProducts.forEach(p => {
                 const converted = currency === 'USD' ? (p.priceUSD * rate).toFixed(2) : Math.round(p.priceUSD * rate).toLocaleString();
                 const storeLogo = p.store === 'Gratis' ? gratisLogo : watsonsLogo;
-                const btnText = currentLang === 'ar' ? '📄 عرض التفاصيل' : '📄 View Details';
+                const btnText = currentLang === 'ar' ? 'عرض التفاصيل' : 'View Details';
                 const productId = p._id || p.id;
+                
+                // 🟢 NEW: Display translated name if cached, otherwise show English
+                const displayName = (currentLang === 'ar' && p.cachedNameAr) ? p.cachedNameAr : p.name;
 
                 grid.innerHTML += `
                     <div class="card">
                         <div onclick="showProductDetails('${productId}')" style="cursor: pointer;">
-                            <img src="${storeLogo}" style="height: 50px; object-fit: contain; margin: 0 auto 25px auto; display: block;" onerror="this.style.display='none'">
-                            <img src="${p.image}" style="width: 100%; height: 180px; object-fit: contain; margin-bottom: 10px; border-radius: 8px;">
-                            <h3>${p.name}</h3>
+                            <img src="${storeLogo}" style="height: 35px; object-fit: contain; margin: 0 auto 15px auto; display: block;" onerror="this.style.display='none'">
+                            <img src="${p.image}" style="width: 100%; height: 150px; object-fit: contain; margin-bottom: 10px; border-radius: 8px;">
+                            <h3 id="grid-name-${productId}">${displayName}</h3>
                         </div>
-                        <button class="btn-details" onclick="showProductDetails('${productId}')">${btnText}</button>
-                        <div id="modal-desc-${productId}" class="product-inline-desc" style="display: none; margin-bottom: 20px;" dir="${currentLang === 'ar' ? 'rtl' : 'ltr'}"></div>
+                        <button class="btn-details" onclick="showProductDetails('${productId}')">
+                            <span style="opacity: 0.5; font-size: 0.9rem;">📄</span> ${btnText}
+                        </button>
+                        <div id="modal-desc-${productId}" class="product-inline-desc" style="display: none; margin-bottom: 15px;" dir="${currentLang === 'ar' ? 'rtl' : 'ltr'}"></div>
                         <div>
-                            <p class="original-price">${countryText}: ${p.originalTRY} TRY</p>
+                            <p class="original-price"><span>${countryText}: ${p.originalTRY} TRY</span></p>
                             <div class="price-box">
                                 <div class="price-amount">${symbol} ${converted}</div>
                                 <button class="price-add-btn" onclick="addToCart('${productId}')">+</button>
@@ -621,6 +636,14 @@
                     </div>
                 `;
             });
+            
+            // 🟢 NEW: Trigger translation requests for displayed products smoothly
+            if (currentLang === 'ar') {
+                paginatedProducts.forEach(p => {
+                    if (!p.cachedNameAr) translateName(p, `grid-name-${p._id || p.id}`);
+                });
+            }
+
             renderPaginationControls(totalPages);
             updateCartUI();
         }
@@ -634,21 +657,28 @@
             const converted = currency === 'USD' ? (product.priceUSD * rate).toFixed(2) : Math.round(product.priceUSD * rate).toLocaleString();
             const symbol = currency === 'USD' ? '$' : 'ل.س';
             const body = document.getElementById('product-modal-body');
-            const btnDescText = currentLang === 'ar' ? '📖 قراءة الوصف' : '📖 Read Description';
+            const btnDescText = currentLang === 'ar' ? 'قراءة الوصف' : 'Read Description';
             
+            // 🟢 NEW: Apply translated product name to modal
+            const displayName = (currentLang === 'ar' && product.cachedNameAr) ? product.cachedNameAr : product.name;
+
             body.innerHTML = `
                 <img src="${product.image}" class="product-detail-img" onerror="this.src='placeholder.png'">
-                <h2 class="product-detail-name">${product.name}</h2>
+                <h2 id="modal-name-${product._id || product.id}" class="product-detail-name">${displayName}</h2>
                 <p class="product-detail-price" style="margin-bottom: 10px;">${symbol} ${converted}</p>
-                <button class="btn-outline" style="margin-bottom: 15px; padding: 8px; font-size: 0.9rem;" onclick="toggleModalDesc('${product._id || product.id}', this)">
-                    ${btnDescText}
+                <button class="btn-outline" style="margin-bottom: 15px; padding: 10px; font-size: 0.95rem; border-width: 1.5px; border-radius: 10px;" onclick="toggleModalDesc('${product._id || product.id}', this)">
+                    <span style="opacity:0.6;">📖</span> ${btnDescText}
                 </button>
                 <div id="modal-desc-box" class="product-inline-desc" style="display: none; margin-bottom: 20px;" dir="${currentLang === 'ar' ? 'rtl' : 'ltr'}"></div>
-                <button class="btn-primary" onclick="addToCart('${product._id || product.id}'); toggleModal('product-modal');">
+                <button class="btn-primary" style="padding: 14px; font-size: 1.1rem;" onclick="addToCart('${product._id || product.id}'); toggleModal('product-modal');">
                     ${currentLang === 'ar' ? 'أضف إلى السلة 🛒' : 'Add to Cart 🛒'}
                 </button>
             `;
             toggleModal('product-modal');
+            
+            if (currentLang === 'ar' && !product.cachedNameAr) {
+                translateName(product, `modal-name-${product._id || product.id}`);
+            }
         }
 
         async function toggleModalDesc(productId, btnElement) {
@@ -656,13 +686,13 @@
             if (!descBox) return;
             if (descBox.style.display === 'block') {
                 descBox.style.display = 'none';
-                btnElement.innerHTML = currentLang === 'ar' ? '📖 قراءة الوصف' : '📖 Read Description';
+                btnElement.innerHTML = `<span style="opacity:0.6;">📖</span> ${currentLang === 'ar' ? 'قراءة الوصف' : 'Read Description'}`;
                 return;
             }
             const product = products.find(p => p._id === productId || p.id === productId);
             let finalDesc = product.description || (currentLang === 'ar' ? 'لا يوجد وصف متاح لهذا المنتج.' : 'No description available for this product.');
             descBox.style.display = 'block';
-            btnElement.innerHTML = currentLang === 'ar' ? '⬆️ إخفاء الوصف' : '⬆️ Hide Description';
+            btnElement.innerHTML = `<span style="opacity:0.6;">⬆️</span> ${currentLang === 'ar' ? 'إخفاء الوصف' : 'Hide Description'}`;
             if (currentLang === 'ar' && product.description) {
                 if (!descBox.dataset.translated) {
                     descBox.innerHTML = '⏳ جاري الترجمة...';
@@ -674,7 +704,6 @@
                         descBox.dataset.translated = "true"; 
                         product.cachedTranslation = translatedText; 
                     } catch (error) {
-                        console.error("Translation failed", error);
                         descBox.innerHTML = finalDesc; 
                     }
                 } else {
@@ -689,11 +718,18 @@
             const container = document.getElementById('pagination-controls');
             if (!container) return;
             if (totalPages <= 1) { container.innerHTML = ''; return; }
-            let html = `<button class="page-btn" ${currentPage === 1 ? 'disabled' : ''} onclick="changePage(${currentPage - 1})">Previous</button>`;
+            
+            let html = `<button class="page-btn" ${currentPage === 1 ? 'disabled' : ''} onclick="changePage(${currentPage - 1})">${currentLang === 'ar' ? 'السابق' : 'Previous'}</button>`;
+            
             for (let i = 1; i <= totalPages; i++) {
-                html += `<button class="page-btn ${currentPage === i ? 'active' : ''}" onclick="changePage(${i})">${i}</button>`;
+                if (i === 1 || i === totalPages || (i >= currentPage - 2 && i <= currentPage + 2)) {
+                    html += `<button class="page-btn square ${currentPage === i ? 'active' : ''}" onclick="changePage(${i})">${i}</button>`;
+                } else if (i === currentPage - 3 || i === currentPage + 3) {
+                    html += `<span style="color: var(--primary); font-weight: bold; margin: 0 2px;">...</span>`;
+                }
             }
-            html += `<button class="page-btn" ${currentPage === totalPages ? 'disabled' : ''} onclick="changePage(${currentPage + 1})">Next</button>`;
+            
+            html += `<button class="page-btn" ${currentPage === totalPages ? 'disabled' : ''} onclick="changePage(${currentPage + 1})">${currentLang === 'ar' ? 'التالي' : 'Next'}</button>`;
             container.innerHTML = html;
         }
 
@@ -739,7 +775,7 @@
             if (list) list.innerHTML = '';
             let grandTotal = 0;
             if (cart.length === 0) {
-                if (list) list.innerHTML = `<p style="text-align:center; color:#777; padding:20px;">${currentLang === 'ar' ? 'سلتك فارغة' : 'Your cart is empty'}</p>`;
+                if (list) list.innerHTML = `<p style="text-align:center; color:#888; font-weight:800; padding:20px;">${currentLang === 'ar' ? 'سلتك فارغة' : 'Your cart is empty'}</p>`;
             } else {
                 cart.forEach((item, index) => {
                     if (!item) return; 
@@ -750,26 +786,38 @@
                     const unitPriceText = currency === 'USD' ? `$${unitPrice.toFixed(2)}` : `${Math.round(unitPrice).toLocaleString()} ل.س`;
                     const lineTotalText = currency === 'USD' ? `$${lineTotal.toFixed(2)}` : `${Math.round(lineTotal).toLocaleString()} ل.س`;
                     const unitLabel = currentLang === 'ar' ? 'سعر الوحدة' : 'Unit Price';
+                    
+                    // 🟢 NEW: Render translated name in cart if available
+                    const displayName = (currentLang === 'ar' && item.cachedNameAr) ? item.cachedNameAr : item.name;
+
                     if (list) list.innerHTML += `
                         <div class="cart-item" style="align-items: flex-start;">
                             <img src="${item.image}" alt="${item.name}" onerror="this.src='placeholder.png'">
                             <div class="cart-item-info" style="flex: 1; margin-right: 10px;">
-                                <p class="cart-item-name" style="margin-bottom: 8px;">${item.name}</p>
+                                <p class="cart-item-name" id="cart-name-${index}" style="margin-bottom: 8px;">${displayName}</p>
                                 <div style="display: flex; justify-content: space-between; align-items: center;">
-                                    <div style="display: flex; align-items: center; background: #f4edf9; border-radius: 6px; border: 1px solid #eaddf4; overflow: hidden;">
-                                        <button onclick="changeQuantity(${index}, -1)" style="background:none; border:none; color: var(--primary); padding: 4px 10px; cursor: pointer; font-weight: bold; font-size: 1.1rem;">-</button>
-                                        <span style="color: var(--primary); padding: 4px 8px; font-size: 0.9rem; font-weight: bold; border-left: 1px solid #eaddf4; border-right: 1px solid #eaddf4;">
+                                    <div style="display: flex; align-items: center; background: #f4edf9; border-radius: 8px; border: 1px solid #eaddf4; overflow: hidden; height: 32px;">
+                                        <button onclick="changeQuantity(${index}, -1)" style="background:none; border:none; color: var(--primary); padding: 0 10px; cursor: pointer; font-weight: bold; font-size: 1.1rem;">-</button>
+                                        <span style="color: var(--primary); padding: 0 8px; font-size: 0.9rem; font-weight: 900; border-left: 1px solid #eaddf4; border-right: 1px solid #eaddf4; height: 100%; display: flex; align-items: center;">
                                             ${qty}
                                         </span>
-                                        <button onclick="changeQuantity(${index}, 1)" style="background:none; border:none; color: var(--primary); padding: 4px 10px; cursor: pointer; font-weight: bold; font-size: 1.1rem;">+</button>
+                                        <button onclick="changeQuantity(${index}, 1)" style="background:none; border:none; color: var(--primary); padding: 0 10px; cursor: pointer; font-weight: bold; font-size: 1.1rem;">+</button>
                                     </div>
-                                    <span style="font-size: 0.95rem; font-weight: bold; color: #222;">${lineTotalText}</span>
+                                    <span style="font-size: 1rem; font-weight: 900; color: #222;">${lineTotalText}</span>
                                 </div>
-                                <p style="font-size: 0.75rem; color: #888; margin: 4px 0 0 0;">${unitLabel}: ${unitPriceText}</p>
+                                <p style="font-size: 0.75rem; color: #888; margin: 4px 0 0 0; font-weight: 700;">${unitLabel}: ${unitPriceText}</p>
                             </div>
-                            <button onclick="removeFromCart(${index})" style="background:none; border:none; color:#e74c3c; cursor:pointer; font-size:1.4rem; padding: 0 5px; height: fit-content;">&times;</button>
+                            <button onclick="removeFromCart(${index})" style="background:none; border:none; color:#e74c3c; cursor:pointer; font-size:1.5rem; padding: 0 5px; height: fit-content; font-weight: bold;">&times;</button>
                         </div>`;
                 });
+                
+                // 🟢 NEW: Trigger cart translations
+                if (currentLang === 'ar') {
+                    cart.forEach((item, index) => {
+                        if (!item) return;
+                        if (!item.cachedNameAr) translateName(item, `cart-name-${index}`);
+                    });
+                }
             }
             const totalEl = document.getElementById('cart-total');
             const currEl = document.getElementById('cart-currency');
@@ -801,14 +849,14 @@
         async function openMyOrders() {
             toggleModal('orders-modal');
             const list = document.getElementById('user-orders-list');
-            list.innerHTML = `<p style="text-align:center;">${currentLang === 'ar' ? 'جاري التحميل...' : 'Loading orders...'}</p>`;
+            list.innerHTML = `<p style="text-align:center; font-weight: bold;">${currentLang === 'ar' ? 'جاري التحميل...' : 'Loading orders...'}</p>`;
             try {
                 const response = await fetch(`${API_URL}/orders/phone/${currentUser.phone}`);
                 if (!response.ok) throw new Error("Could not fetch orders");
                 const orders = await response.json();
                 list.innerHTML = '';
                 if (orders.length === 0) {
-                    list.innerHTML = `<p style="text-align:center; color:#777;">${currentLang === 'ar' ? 'لا توجد طلبات سابقة.' : 'No previous orders found.'}</p>`;
+                    list.innerHTML = `<p style="text-align:center; color:#888; font-weight: 800;">${currentLang === 'ar' ? 'لا توجد طلبات سابقة.' : 'No previous orders found.'}</p>`;
                     return;
                 }
                 orders.forEach(order => {
@@ -820,23 +868,52 @@
                     const statusText = order.status || 'Pending';
                     const dateText = new Date(order.createdAt).toLocaleDateString();
                     list.innerHTML += `
-                        <div style="border: 1px solid #eee; border-radius: 8px; padding: 15px; background: #fafafa; text-align: left;">
-                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                                <span style="font-weight: bold; color: var(--primary);">${dateText}</span>
-                                <span style="background: ${statusColor}; color: white; padding: 4px 10px; border-radius: 12px; font-size: 0.85rem; font-weight: bold;">
+                        <div style="border: 1.5px solid #eee; border-radius: 12px; padding: 15px; background: #fafafa; text-align: left;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                                <span style="font-weight: 900; color: var(--primary); font-size: 0.95rem;">${dateText}</span>
+                                <span style="background: ${statusColor}; color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: 800;">
                                     ${statusText}
                                 </span>
                             </div>
-                            <p style="margin: 0; font-size: 0.95rem;">Total: <strong style="color: var(--primary);">${(order.total || 0).toLocaleString()} SYP</strong></p>
+                            <p style="margin: 0; font-size: 0.95rem; font-weight: 700; color: #555;">Total: <strong style="color: var(--primary); font-size: 1.1rem;">${(order.total || 0).toLocaleString()} SYP</strong></p>
                         </div>
                     `;
                 });
             } catch (error) {
                 console.error(error);
-                list.innerHTML = `<p style="text-align:center; color:red;">Error loading orders.</p>`;
+                list.innerHTML = `<p style="text-align:center; color:#e74c3c; font-weight: bold;">Error loading orders.</p>`;
             }
         }
         
+        // 🟢 NEW: Core helper function to fetch and apply product name translations
+        async function translateName(productObj, elementId) {
+            try {
+                const res = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=ar&dt=t&q=${encodeURIComponent(productObj.name)}`);
+                const data = await res.json();
+                const translated = data[0].map(x => x[0]).join('');
+                
+                // Cache it so we don't fetch it again
+                productObj.cachedNameAr = translated;
+                
+                // Update the DOM element directly
+                const el = document.getElementById(elementId);
+                if (el) el.innerText = translated;
+                
+                // Keep Cart saved data in sync so cart items stay translated upon refresh
+                let cartUpdated = false;
+                cart.forEach(item => {
+                    if ((item._id || item.id) === (productObj._id || productObj.id)) {
+                        item.cachedNameAr = translated;
+                        cartUpdated = true;
+                    }
+                });
+                if (cartUpdated) localStorage.setItem('syriaCareCart', JSON.stringify(cart));
+
+            } catch (error) {
+                console.error("Name translation failed", error);
+            }
+        }
+
         fetchProductsFromCloud(); 
         switchLanguage(currentLang);
     </script>
