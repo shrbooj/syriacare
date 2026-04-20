@@ -146,7 +146,6 @@ tr:hover td { background: #fdfbff; }
 
 <div class="main">
 
-  <!-- ORDERS -->
   <div id="page-orders" class="page active">
     <div class="page-title">Customer Orders</div>
     <div class="stats">
@@ -170,20 +169,19 @@ tr:hover td { background: #fdfbff; }
     </div>
   </div>
 
-  <!-- IMPORT FROM URL -->
   <div id="page-import" class="page">
     <div class="page-title">🔗 Import Products from URL</div>
-    <p class="page-sub">Paste a product URL from Watsons Turkey or Gratis — AI reads the page and fills in all the details for you.</p>
+    <p class="page-sub">Paste a <strong>product URL</strong> or a <strong>category URL</strong> from Watsons Turkey or Gratis. If you paste a category URL, we'll auto-extract all products on that page for you!</p>
 
     <div class="import-steps">
-      <div class="step"><div class="step-num">1</div><div class="step-txt">Copy a product URL from watsons.com.tr or gratis.com</div></div>
-      <div class="step"><div class="step-num">2</div><div class="step-txt">Paste it below and click Fetch — AI extracts name, image & price</div></div>
+      <div class="step"><div class="step-num">1</div><div class="step-txt">Copy a product OR category URL from watsons.com.tr or gratis.com</div></div>
+      <div class="step"><div class="step-num">2</div><div class="step-txt">Paste it below and click Fetch — the system extracts products automatically</div></div>
       <div class="step"><div class="step-num">3</div><div class="step-txt">Set your USD selling price, review, and save to your store</div></div>
     </div>
 
     <div class="url-row">
-      <input type="url" id="import-url" placeholder="https://www.watsons.com.tr/urun/… or https://www.gratis.com/…">
-      <button class="btn-fetch" id="fetch-btn" onclick="fetchFromUrl()">⚡ Fetch Product</button>
+      <input type="url" id="import-url" placeholder="https://www.watsons.com.tr/makyaj/c/02 or /urun/...">
+      <button class="btn-fetch" id="fetch-btn" onclick="fetchFromUrl()">⚡ Fetch Product(s)</button>
     </div>
 
     <div id="import-status" class="import-status"></div>
@@ -235,7 +233,6 @@ tr:hover td { background: #fdfbff; }
       <button class="btn-save" onclick="saveImportedProduct()">💾 Save to My Store</button>
     </div>
 
-    <!-- BATCH QUEUE -->
     <div id="batch-section" class="batch-section">
       <div class="batch-header">
         <h3>📋 Import Queue — <span id="batch-count">0</span> products</h3>
@@ -245,7 +242,6 @@ tr:hover td { background: #fdfbff; }
     </div>
   </div>
 
-  <!-- ADD MANUALLY -->
   <div id="page-add" class="page">
     <div class="page-title">Add / Edit Product</div>
     <div class="form-card">
@@ -283,7 +279,6 @@ tr:hover td { background: #fdfbff; }
     </div>
   </div>
 
-  <!-- MANAGE -->
   <div id="page-manage" class="page">
     <div class="page-title">Manage Products</div>
     <div class="table-wrap">
@@ -306,7 +301,8 @@ tr:hover td { background: #fdfbff; }
 <div id="toast"></div>
 
 <script>
-const API = 'https://syriacare.onrender.com/api';
+const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.protocol === 'file:';
+const API = isLocal ? 'http://localhost:5000/api' : 'https://syriacare.onrender.com/api';
 let allOrders = [], allProducts = [], batchQueue = [];
 let base64ImageString = '';
 
@@ -412,70 +408,140 @@ function filterProducts(q) {
 }
 
 // ═══════════════════════════════════════
-// AI IMPORT FEATURE
+// INSTANT WEB SCRAPER IMPORT
 // ═══════════════════════════════════════
 async function fetchFromUrl() {
   const url = document.getElementById('import-url').value.trim();
-  if (!url) { showToast('Paste a product URL first'); return; }
+  if (!url) { showToast('Paste a URL first'); return; }
 
   const btn = document.getElementById('fetch-btn');
   btn.disabled = true; btn.textContent = '⏳ Fetching…';
-  setStatus('loading', 'Loading the product page…');
   document.getElementById('result-card').style.display = 'none';
 
   try {
-    // Fetch page via CORS proxy
-    const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
-    const proxyRes = await fetch(proxyUrl);
-    if (!proxyRes.ok) throw new Error('Could not load page');
-    const { contents: html } = await proxyRes.json();
-    if (!html) throw new Error('Page returned empty — try a different URL');
-
-    setStatus('loading', 'AI is reading the product details…');
-
-    // Ask Claude to extract product data
-    const aiRes = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 800,
-        messages: [{
-          role: 'user',
-          content: `Extract product data from this HTML and return ONLY a JSON object — no markdown, no explanation, just raw JSON.
-
-JSON format:
-{
-  "name": "product name in English (translate from Turkish if needed)",
-  "image": "full absolute URL of the main product image",
-  "priceTRY": 0,
-  "category": "pick the best match: Makeup | Skin Care | Hair Care | Perfume & Deodorant | Personal Care | Electrical Products | Solar Products | Mother & Baby",
-  "store": "Watsons or Gratis based on the domain",
-  "description": "1-2 sentence product description in English"
+    const isCategory = !url.includes('/urun/') && !url.includes('-p-') && !url.includes('/p/');
+    if (isCategory) {
+      await fetchCategory(url);
+    } else {
+      await fetchSingleProduct(url, false);
+    }
+  } catch (err) {
+    setStatus('err', `❌ ${err.message}`);
+  } finally {
+    btn.disabled = false; btn.textContent = '⚡ Fetch Product(s)';
+  }
 }
 
-Source URL: ${url}
-HTML (first 9000 chars):
-${html.replace(/<script[^>]*>[\s\S]*?<\/script>/gi,'').replace(/<style[^>]*>[\s\S]*?<\/style>/gi,'').substring(0,9000)}`
-        }]
-      })
-    });
+async function fetchCategory(url) {
+  setStatus('loading', 'Loading category page…');
+  const proxyUrl = `${API}/proxy?url=${encodeURIComponent(url)}`;
+  const proxyRes = await fetch(proxyUrl);
+  if (!proxyRes.ok) throw new Error('Could not load category page. Is your local server running?');
+  const html = await proxyRes.text();
+  if (!html) throw new Error('Category page returned empty');
 
-    const aiData = await aiRes.json();
-    const raw = (aiData.content?.[0]?.text || '').replace(/```json|```/g,'').trim();
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(html, "text/html");
 
-    let product;
-    try { product = JSON.parse(raw); }
-    catch { throw new Error('AI could not parse product data. Try a different URL.'); }
+  const links = Array.from(doc.querySelectorAll('a'))
+                     .map(a => a.href || a.getAttribute('href') || '')
+                     .filter(href => href.includes('/urun/') || href.includes('-p-') || href.includes('/p/'));
 
-    if (!product.name) throw new Error('No product name found on this page.');
+  const uniqueLinks = [...new Set(links)].map(link => {
+      if (link.startsWith('http')) return link;
+      const base = url.includes('gratis.com') ? 'https://www.gratis.com' : 'https://www.watsons.com.tr';
+      return link.startsWith('/') ? base + link : base + '/' + link;
+  });
 
-    // Fill form
+  if (uniqueLinks.length === 0) {
+      throw new Error('No product links found on this category page.');
+  }
+
+  setStatus('loading', `Found ${uniqueLinks.length} products. Starting bulk extraction...`);
+  
+  let successCount = 0;
+  for (let i = 0; i < uniqueLinks.length; i++) {
+      setStatus('loading', `Extracting product ${i+1} of ${uniqueLinks.length}...`);
+      try {
+          await fetchSingleProduct(uniqueLinks[i], true);
+          successCount++;
+      } catch (e) {
+          console.error('Failed to extract', uniqueLinks[i], e);
+      }
+  }
+
+  setStatus('ok', `✅ Bulk extract complete! Added ${successCount} products to the queue.`);
+  document.getElementById('batch-section').scrollIntoView({ behavior: 'smooth' });
+}
+
+async function fetchSingleProduct(url, isBulk = false) {
+  if (!isBulk) setStatus('loading', 'Loading the product page…');
+
+  const proxyUrl = `${API}/proxy?url=${encodeURIComponent(url)}`;
+  const proxyRes = await fetch(proxyUrl);
+  if (!proxyRes.ok) throw new Error('Could not load product page. Is your local server running?');
+  const html = await proxyRes.text();
+  if (!html) throw new Error('Product page returned empty');
+
+  if (!isBulk) setStatus('loading', 'Extracting product details…');
+
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(html, "text/html");
+
+  let product = { name: "", image: "", priceTRY: 0, description: "", store: "Watsons", category: "Personal Care" };
+
+  // 1. Extract Name
+  const ogTitle = doc.querySelector('meta[property="og:title"]');
+  if (ogTitle) product.name = ogTitle.content.split(' | ')[0].split(' - ')[0].trim();
+  else {
+    const titleTag = doc.querySelector('title');
+    if (titleTag) product.name = titleTag.innerText.split(' | ')[0].trim();
+  }
+
+  // 2. Extract Image
+  const ogImage = doc.querySelector('meta[property="og:image"]');
+  if (ogImage) product.image = ogImage.content;
+
+  // 3. Extract Price
+  const priceMeta = doc.querySelector('meta[property="product:price:amount"]');
+  if (priceMeta) {
+     product.priceTRY = parseFloat(priceMeta.content.replace(',', '.'));
+  } else {
+     const priceMatch = html.match(/"price"\s*:\s*(\d+(?:\.\d+)?)/) || html.match(/(\d+(?:[.,]\d+)?)\s*(?:TL|₺)/i);
+     if (priceMatch && priceMatch[1]) product.priceTRY = parseFloat(priceMatch[1].replace(',', '.'));
+  }
+
+  // 4. Extract Description
+  const ogDesc = doc.querySelector('meta[property="og:description"]');
+  if (ogDesc) product.description = ogDesc.content.substring(0, 120) + '...';
+
+  // 5. Determine Store & Category
+  if (url.includes('gratis.com')) product.store = 'Gratis';
+  
+  const checkText = (url + product.name).toLowerCase();
+  if (checkText.includes('makyaj') || checkText.includes('mascara') || checkText.includes('ruj') || checkText.includes('makeup')) product.category = 'Makeup';
+  else if (checkText.includes('saç') || checkText.includes('sampuan') || checkText.includes('hair')) product.category = 'Hair Care';
+  else if (checkText.includes('parfüm') || checkText.includes('edt') || checkText.includes('edp')) product.category = 'Perfume & Deodorant';
+  else if (checkText.includes('güneş') || checkText.includes('sun')) product.category = 'Solar Products';
+  else if (checkText.includes('bebek') || checkText.includes('baby')) product.category = 'Mother & Baby';
+  else if (checkText.includes('cilt') || checkText.includes('skin') || checkText.includes('yüz')) product.category = 'Skin Care';
+
+  if (!product.name) throw new Error('No product data found for this URL.');
+
+  if (isBulk) {
+    if (!batchQueue.find(p => p.name === product.name)) {
+      batchQueue.push({ ...product, saved: false, _idx: batchQueue.length });
+      renderBatch();
+    }
+  } else {
+    // Fill the Admin Form automatically
     document.getElementById('r-name').value = product.name;
     document.getElementById('r-image').value = product.image || '';
     document.getElementById('r-img').src = product.image || '';
     document.getElementById('r-try').value = product.priceTRY || '';
-    document.getElementById('r-usd').value = product.priceTRY ? (product.priceTRY / 30).toFixed(2) : '';
+    
+    // Auto-calculate rough USD price (divided by ~33 TRY)
+    document.getElementById('r-usd').value = product.priceTRY ? (product.priceTRY / 33).toFixed(2) : ''; 
     document.getElementById('r-desc').value = product.description || '';
     setSelectVal('r-cat', product.category);
     setSelectVal('r-store', product.store);
@@ -488,11 +554,6 @@ ${html.replace(/<script[^>]*>[\s\S]*?<\/script>/gi,'').replace(/<style[^>]*>[\s\
       batchQueue.push({ ...product, saved: false, _idx: batchQueue.length });
       renderBatch();
     }
-
-  } catch (err) {
-    setStatus('err', `❌ ${err.message}`);
-  } finally {
-    btn.disabled = false; btn.textContent = '⚡ Fetch Product';
   }
 }
 
@@ -563,7 +624,7 @@ function renderBatch() {
           ? `<span class="saved-tag">✅ Saved</span>`
           : `<div class="batch-price-row">
               <span style="font-size:.75rem;font-weight:700;color:#888">USD:</span>
-              <input type="number" class="batch-price-input" id="bp-${i}" step="0.01" value="${p.priceTRY?(p.priceTRY/30).toFixed(2):''}">
+              <input type="number" class="batch-price-input" id="bp-${i}" step="0.01" value="${p.priceTRY?(p.priceTRY/33).toFixed(2):''}">
               <button class="btn-bs" onclick="saveBatchItem(${i})">Save</button>
             </div>`}
       </div>
