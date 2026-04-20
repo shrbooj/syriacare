@@ -3,10 +3,10 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 
 const app = express();
-app.use(cors()); 
+app.use(cors());
 app.use('/images', express.static('images'));
 app.use(express.static(__dirname));
-app.use(express.json({ limit: '10mb' })); 
+app.use(express.json({ limit: '10mb' }));
 
 /// This is your unique cloud key
 const MONGO_URI = "mongodb+srv://karimlaham232_db_user:karim.1234@cluster0.rcrmtnz.mongodb.net/syriacare?retryWrites=true&w=majority";
@@ -15,7 +15,7 @@ const MONGO_URI = "mongodb+srv://karimlaham232_db_user:karim.1234@cluster0.rcrmt
 // SCHEMAS (Database Structure)
 // ==========================================
 const productSchema = new mongoose.Schema({
-    id: String, 
+    id: String,
     name: String,
     category: String,
     store: String,
@@ -33,7 +33,7 @@ const orderSchema = new mongoose.Schema({
     location: String,
     items: Array,
     total: Number,
-    status: { type: String, default: 'Pending' }, 
+    status: { type: String, default: 'Pending' },
     date: { type: Date, default: Date.now }
 });
 const Order = mongoose.model('Order', orderSchema);
@@ -49,6 +49,30 @@ app.get('/api/products', async (req, res) => {
         res.json(products);
     } catch (err) {
         res.status(500).json({ message: "Error fetching products" });
+    }
+});
+
+// PROXY ROUTE (Solves CORS and third-party proxy blocking)
+app.get('/api/proxy', async (req, res) => {
+    try {
+        const targetUrl = req.query.url;
+        if (!targetUrl) return res.status(400).json({ error: "No URL provided" });
+
+        // Use native fetch to get the page with a browser-like User-Agent
+        const response = await fetch(targetUrl, {
+            headers: {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
+                'Accept-Language': 'en-US,en;q=0.5'
+            }
+        });
+
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+        const html = await response.text();
+        res.send(html);
+    } catch (error) {
+        console.error("Proxy error:", error);
+        res.status(500).json({ error: "Failed to fetch from target URL" });
     }
 });
 
