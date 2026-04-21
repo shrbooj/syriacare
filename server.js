@@ -56,25 +56,31 @@ app.get('/ping', async (req, res) => {
 let cachedProducts = null;
 let lastCacheTime = null;
 
-// GET all products (With 5-minute RAM Cache)
+// GET all products (Optimized with .lean() and 5-minute RAM Cache)
 app.get('/api/products', async (req, res) => {
     try {
-        // If we have products in memory and they are fresh (under 5 mins), send them instantly
+        // 1. Check RAM Cache (Instant)
         if (cachedProducts && lastCacheTime > Date.now() - 300000) {
             console.log("⚡ RAM CACHE: Serving products instantly.");
             return res.json(cachedProducts);
         }
 
-        // Otherwise, pull from MongoDB
-        console.log("🐢 DATABASE: Fetching from MongoDB...");
-        const products = await Product.find({});
+        // 2. Otherwise, pull from MongoDB
+        console.log("🐢 DATABASE: Fetching started...");
+        console.time("⏱️ DB_Fetch_Duration"); // Starts a timer in your logs
+
+        // .lean() makes the query significantly faster by returning raw JSON instead of heavy Mongoose documents
+        const products = await Product.find({}).lean();
         
-        // Save to memory for the next 5 minutes
+        console.timeEnd("⏱️ DB_Fetch_Duration"); // Tells you exactly how long it took
+
+        // 3. Save to memory for the next 5 minutes
         cachedProducts = products;
         lastCacheTime = Date.now();
         
         res.json(products);
     } catch (err) {
+        console.error("❌ ERROR fetching products:", err);
         res.status(500).json({ message: "Error fetching products" });
     }
 });
@@ -84,7 +90,7 @@ app.post('/api/products', async (req, res) => {
     try {
         const newProduct = new Product(req.body);
         await newProduct.save();
-        // Clear cache so new product shows up
+        // Clear cache so new product shows up immediately
         cachedProducts = null; 
         res.json({ message: "Product saved!", product: newProduct });
     } catch (err) {
@@ -143,20 +149,20 @@ app.post('/api/orders', async (req, res) => {
     }
 });
 
-// GET all orders
+// GET all orders (Optimized with .lean())
 app.get('/api/orders', async (req, res) => {
     try {
-        const orders = await Order.find().sort({ date: -1 });
+        const orders = await Order.find().sort({ date: -1 }).lean();
         res.json(orders);
     } catch (error) {
         res.status(500).json({ error: "Failed to fetch orders" });
     }
 });
 
-// GET orders by phone
+// GET orders by phone (Optimized with .lean())
 app.get('/api/orders/phone/:phone', async (req, res) => {
     try {
-        const userOrders = await Order.find({ phone: req.params.phone }).sort({ date: -1 });
+        const userOrders = await Order.find({ phone: req.params.phone }).sort({ date: -1 }).lean();
         res.json(userOrders);
     } catch (error) {
         res.status(500).json({ error: "Failed to fetch user orders" });
@@ -190,4 +196,4 @@ mongoose.connect(MONGO_URI)
     })
     .catch(err => {
         console.error("🔴 CLOUD ERROR:", err);
-    }); 
+    });
