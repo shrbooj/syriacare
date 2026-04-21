@@ -42,6 +42,11 @@ const Order = mongoose.model('Order', orderSchema);
 // API ROUTES
 // ==========================================
 
+// 🟢 NEW: Lightweight route to keep the server awake for UptimeRobot
+app.get('/ping', (req, res) => {
+    res.status(200).send('Server is awake!');
+});
+
 // GET all products
 app.get('/api/products', async (req, res) => {
     try {
@@ -162,4 +167,4 @@ mongoose.connect(MONGO_URI)
     })
     .catch(err => {
         console.error("🔴 CLOUD ERROR:", err);
-    });
+    }); 
