@@ -141,12 +141,19 @@ app.put('/api/orders/:id', async (req, res) => {
 // ==========================================
 // CONNECT AND START
 // ==========================================
+// ==========================================
+// CONNECT AND START
+// ==========================================
 mongoose.connect(MONGO_URI)
     .then(() => {
         console.log("🟢 SUCCESS: Connected to MongoDB Atlas!");
+        
+        // Railway provides the PORT automatically
         const PORT = process.env.PORT || 5000;
-        app.listen(PORT, () => {
-            console.log(`🚀 Server is running on port ${PORT}`);
+        
+        // ADD '0.0.0.0' HERE
+        app.listen(PORT, '0.0.0.0', () => {
+            console.log("Server is running and accessible on port ${PORT}");
         });
     })
     .catch(err => {
