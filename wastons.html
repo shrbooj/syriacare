@@ -128,7 +128,7 @@
     .loader { border: 4px solid rgba(0,0,0,0.05); border-left-color: var(--primary); border-radius: 50%; width: 35px; height: 35px; animation: spin 1s linear infinite; margin: 0 auto; }
     @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     
-    /* ── MOBILE RESPONSIVE (MATCHING SCREENSHOT) ── */
+    /* ── MOBILE RESPONSIVE ── */
     @media (max-width: 600px) {
         header { flex-direction: column; padding: 15px 4%; gap: 12px; align-items: stretch; }
         .logo { justify-content: center; width: 100%; margin: 0; }
@@ -514,27 +514,42 @@
         async function fetchProductsFromCloud() {
             isLoadingProducts = true; 
             const grid = document.getElementById('product-grid');
-            
-            if (grid) {
-                grid.innerHTML = `
-                    <div style="grid-column: 1 / -1; text-align: center; padding: 50px;">
-                        <div class="loader"></div>
-                        <p style="color: var(--primary); font-weight: 800; margin-top: 20px; font-size: 1.05rem;">
-                            ${currentLang === 'ar' ? 'جاري تحميل المنتجات... الرجاء الانتظار قليلاً ⏳' : 'Loading products... Please wait a moment ⏳'}
-                        </p>
-                    </div>`;
+
+            // 1. INSTANT TRICK: Check local storage
+            const cachedProducts = localStorage.getItem('syriaCareProducts');
+            if (cachedProducts) {
+                products = JSON.parse(cachedProducts);
+                isLoadingProducts = false;
+                renderProducts(); // Render immediately
+            } else {
+                if (grid) {
+                    grid.innerHTML = `
+                        <div style="grid-column: 1 / -1; text-align: center; padding: 50px;">
+                            <div class="loader"></div>
+                            <p style="color: var(--primary); font-weight: 800; margin-top: 20px; font-size: 1.05rem;">
+                                ${currentLang === 'ar' ? 'جاري تحميل المنتجات... الرجاء الانتظار قليلاً ⏳' : 'Loading products... Please wait a moment ⏳'}
+                            </p>
+                        </div>`;
+                }
             }
 
+            // 2. Fetch fresh data in the background
             try {
                 const response = await fetch(`${API_URL}/api/products`);
                 if (!response.ok) throw new Error("Connection failed");
-                products = await response.json();
+                const freshProducts = await response.json();
+                
+                // 3. Save for next time
+                localStorage.setItem('syriaCareProducts', JSON.stringify(freshProducts));
+                
+                // 4. Update memory and re-render if it wasn't cached, or if we want to silently update
+                products = freshProducts;
                 isLoadingProducts = false; 
                 renderProducts(); 
             } catch (error) {
                 isLoadingProducts = false;
                 console.error("🔴 Database Error:", error);
-                if (grid) {
+                if (!cachedProducts && grid) { // Only show error if no cache exists
                     grid.innerHTML = `
                         <div style="grid-column: 1 / -1; text-align: center; padding: 40px;">
                             <p style="color: #e74c3c; font-weight: 800; font-size: 1.05rem;">
