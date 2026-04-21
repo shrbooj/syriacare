@@ -351,7 +351,7 @@
     </div>
 
     <script>
-        const API_URL = 'https://syriacare-production.up.railway.app/api';
+        const API = 'https://syriacare-production.up.railway.app/api';
         const RATES = { USD: 1, SYP: 14500 };
         
         let products = []; 
@@ -526,7 +526,7 @@
             }
 
             try {
-                const response = await fetch(`${API_URL}/products`); 
+                const response = await fetch(`${API}/products`); 
                 if (!response.ok) throw new Error("Connection failed");
                 products = await response.json();
                 isLoadingProducts = false; 
@@ -851,7 +851,7 @@
             const list = document.getElementById('user-orders-list');
             list.innerHTML = `<p style="text-align:center; font-weight: bold;">${currentLang === 'ar' ? 'جاري التحميل...' : 'Loading orders...'}</p>`;
             try {
-                const response = await fetch(`${API_URL}/orders/phone/${currentUser.phone}`);
+                const response = await fetch(`${API}/orders/phone/${currentUser.phone}`);
                 if (!response.ok) throw new Error("Could not fetch orders");
                 const orders = await response.json();
                 list.innerHTML = '';

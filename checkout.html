@@ -119,7 +119,7 @@ header { background: #fff; padding: 0 5%; height: 64px; display: flex; align-ite
 </div>
 
 <script>
-const API_URL = 'https://syriacare-production.up.railway.app/api';
+const API = 'https://syriacare-production.up.railway.app/api';
 const RATES = { USD: 1, SYP: 14500 };
 let lang = localStorage.getItem('syriaCareLang') || 'en';
 let cart = JSON.parse(localStorage.getItem('syriaCareCart') || '[]');
@@ -178,7 +178,7 @@ async function processCheckout(e) {
   };
 
   try {
-    const res = await fetch(`${API_URL}/orders`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(orderData) });
+    const res = await fetch(`${API}/orders`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(orderData) });
     if (!res.ok) throw new Error();
     localStorage.removeItem('syriaCareCart');
     document.getElementById('checkout-view').style.display = 'none';
