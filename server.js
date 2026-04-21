@@ -20,7 +20,7 @@ const productSchema = new mongoose.Schema({
     image: String,
     priceUSD: Number,
     originalTRY: Number,
-    description: String 
+    description: String
 });
 const Product = mongoose.model('Product', productSchema);
 
@@ -37,21 +37,18 @@ const orderSchema = new mongoose.Schema({
 const Order = mongoose.model('Order', orderSchema);
 
 // ==========================================
-// API ROUTES
+// HEALTH CHECK
 // ==========================================
-
-// Health Check for Railway
-app.get('/', (req, res) => {
-    res.status(200).send('SyriaCare Express API is live! 🚀');
+app.get('/api/health', (req, res) => {
+    res.status(200).send('Server is awake!');
 });
 
+// ==========================================
+// PRODUCT ROUTES
+// ==========================================
 app.get('/api/products', async (req, res) => {
-    try {
-        const products = await Product.find({});
-        res.json(products);
-    } catch (err) {
-        res.status(500).json({ message: "Error fetching products" });
-    }
+    try { res.json(await Product.find({})); }
+    catch (err) { res.status(500).json({ message: "Error fetching products" }); }
 });
 
 app.post('/api/products', async (req, res) => {
@@ -59,9 +56,7 @@ app.post('/api/products', async (req, res) => {
         const newProduct = new Product(req.body);
         await newProduct.save();
         res.json({ message: "Product saved!", product: newProduct });
-    } catch (err) {
-        res.status(500).json({ message: "Error saving product" });
-    }
+    } catch (err) { res.status(500).json({ message: "Error saving product" }); }
 });
 
 app.put('/api/products/:id', async (req, res) => {
@@ -70,9 +65,7 @@ app.put('/api/products/:id', async (req, res) => {
         const query = isValidObjectId ? { _id: req.params.id } : { id: req.params.id };
         const updatedProduct = await Product.findOneAndUpdate(query, { $set: req.body }, { new: true });
         res.json({ success: true, product: updatedProduct });
-    } catch (error) {
-        res.status(500).json({ error: "Failed to update" });
-    }
+    } catch (error) { res.status(500).json({ error: "Failed to update" }); }
 });
 
 app.delete('/api/products/:id', async (req, res) => {
@@ -81,63 +74,46 @@ app.delete('/api/products/:id', async (req, res) => {
         const query = isValidObjectId ? { _id: req.params.id } : { id: req.params.id };
         await Product.deleteOne(query);
         res.json({ success: true });
-    } catch (error) {
-        res.status(500).json({ error: "Failed to delete" });
-    }
+    } catch (error) { res.status(500).json({ error: "Failed to delete" }); }
 });
 
+// ==========================================
+// ORDER ROUTES
+// ==========================================
 app.post('/api/orders', async (req, res) => {
     try {
         const newOrder = new Order(req.body);
         await newOrder.save();
         res.json({ success: true, order: newOrder });
-    } catch (error) {
-        res.status(500).json({ error: "Failed to save order" });
-    }
+    } catch (error) { res.status(500).json({ error: "Failed to save order" }); }
 });
 
 app.get('/api/orders', async (req, res) => {
+    try { res.json(await Order.find().sort({ date: -1 })); }
+    catch (error) { res.status(500).json({ error: "Failed to fetch orders" }); }
+});
+
+app.get('/api/orders/phone/:phone', async (req, res) => {
+    try { res.json(await Order.find({ phone: req.params.phone }).sort({ date: -1 })); }
+    catch (error) { res.status(500).json({ error: "Failed to fetch user orders" }); }
+});
+
+app.put('/api/orders/:id', async (req, res) => {
     try {
-        const orders = await Order.find().sort({ date: -1 });
-        res.json(orders);
-    } catch (error) {
-        res.status(500).json({ error: "Failed to fetch orders" });
-    }
+        const updatedOrder = await Order.findByIdAndUpdate(
+            req.params.id, { $set: { status: req.body.status } }, { new: true }
+        );
+        res.json({ success: true, order: updatedOrder });
+    } catch (error) { res.status(500).json({ error: "Failed to update order status" }); }
 });
 
-// RESTORED: Get orders by phone
-// 1. Root route for Railway's Health Check (ESSENTIAL)
-app.get('/', (req, res) => {
-    res.status(200).send('SyriaCare API is live and healthy! 🚀');
-});
-
-// 2. Define Port
-const PORT = process.env.PORT || 8080; 
-
-// 3. START LISTENING IMMEDIATELY 
-// We do NOT put mongoose.connect inside a .then() or before this.
-const server = app.listen(PORT, '0.0.0.0', () => {
-    console.log(`🚀 SUCCESS: Server is listening on port ${PORT}`);
-});
-
-// 4. CONNECT TO DATABASE IN THE BACKGROUND
-// This allows the server to pass the health check while the DB connects
-mongoose.connect(MONGO_URI, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-    serverSelectionTimeoutMS: 5000 // Tell it to stop trying after 5 seconds
-})
-.then(() => {
-    console.log("🟢 SUCCESS: Connected to MongoDB Atlas!");
-})
-.catch(err => {
-    console.error("🔴 DATABASE CONNECTION ERROR:", err.message);
-});
-
-// 5. Graceful Shutdown
-process.on('SIGTERM', () => {
-    server.close(() => {
-        mongoose.connection.close();
-        process.exit(0);
-    });
-});
+// ==========================================
+// START
+// ==========================================
+mongoose.connect(MONGO_URI)
+    .then(() => {
+        console.log("🟢 SUCCESS: Connected to MongoDB Atlas!");
+        const PORT = process.env.PORT || 5000;
+        app.listen(PORT, () => console.log(`🚀 Server is running on port ${PORT}`));
+    })
+    .catch(err => console.error("🔴 CLOUD ERROR:", err));
