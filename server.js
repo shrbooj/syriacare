@@ -42,15 +42,37 @@ const Order = mongoose.model('Order', orderSchema);
 // API ROUTES
 // ==========================================
 
-// 🟢 NEW: Lightweight route to keep the server awake for UptimeRobot
-app.get('/ping', (req, res) => {
-    res.status(200).send('Server is awake!');
+// 🟢 LIGHTWEIGHT PING ROUTE: Keeps Server and Database awake
+app.get('/ping', async (req, res) => {
+    try {
+        await mongoose.connection.db.admin().ping();
+        res.status(200).send('Server and Database are both awake! 🚀');
+    } catch (error) {
+        res.status(500).send('Server is awake, but Database failed to ping.');
+    }
 });
 
-// GET all products
+// 🟢 RAM CACHE VARIABLES
+let cachedProducts = null;
+let lastCacheTime = null;
+
+// GET all products (With 5-minute RAM Cache)
 app.get('/api/products', async (req, res) => {
     try {
+        // If we have products in memory and they are fresh (under 5 mins), send them instantly
+        if (cachedProducts && lastCacheTime > Date.now() - 300000) {
+            console.log("⚡ RAM CACHE: Serving products instantly.");
+            return res.json(cachedProducts);
+        }
+
+        // Otherwise, pull from MongoDB
+        console.log("🐢 DATABASE: Fetching from MongoDB...");
         const products = await Product.find({});
+        
+        // Save to memory for the next 5 minutes
+        cachedProducts = products;
+        lastCacheTime = Date.now();
+        
         res.json(products);
     } catch (err) {
         res.status(500).json({ message: "Error fetching products" });
@@ -62,18 +84,18 @@ app.post('/api/products', async (req, res) => {
     try {
         const newProduct = new Product(req.body);
         await newProduct.save();
+        // Clear cache so new product shows up
+        cachedProducts = null; 
         res.json({ message: "Product saved!", product: newProduct });
     } catch (err) {
         res.status(500).json({ message: "Error saving product" });
     }
 });
 
-// 🟢 BULLETPROOF UPDATE ROUTE
+// UPDATE product
 app.put('/api/products/:id', async (req, res) => {
     try {
         const id = req.params.id;
-        
-        // Smart query: Checks both Mongo _id and custom id
         const query = mongoose.Types.ObjectId.isValid(id) 
             ? { $or: [{ _id: id }, { id: id }] } 
             : { id: id };
@@ -84,14 +106,14 @@ app.put('/api/products/:id', async (req, res) => {
             { new: true }
         );
 
-        // If it couldn't find the product, throw a 404 error instead of pretending it worked!
         if (!updatedProduct) {
-            return res.status(404).json({ error: "Product not found in DB." });
+            return res.status(404).json({ error: "Product not found." });
         }
 
+        cachedProducts = null; // Clear cache
         res.json({ success: true, product: updatedProduct });
     } catch (error) {
-        res.status(500).json({ error: "Failed to update product in database" });
+        res.status(500).json({ error: "Failed to update product" });
     }
 });
 
@@ -103,6 +125,7 @@ app.delete('/api/products/:id', async (req, res) => {
             : { id: req.params.id };
 
         await Product.deleteOne(query);
+        cachedProducts = null; // Clear cache
         res.json({ success: true });
     } catch (error) {
         res.status(500).json({ error: "Failed to delete" });
@@ -130,7 +153,7 @@ app.get('/api/orders', async (req, res) => {
     }
 });
 
-// GET orders by phone number
+// GET orders by phone
 app.get('/api/orders/phone/:phone', async (req, res) => {
     try {
         const userOrders = await Order.find({ phone: req.params.phone }).sort({ date: -1 });
@@ -159,10 +182,10 @@ app.put('/api/orders/:id', async (req, res) => {
 // ==========================================
 mongoose.connect(MONGO_URI)
     .then(() => {
-        console.log("🟢 SUCCESS: Connected to MongoDB Atlas!");
+        console.log("🟢 Connected to MongoDB Atlas!");
         const PORT = process.env.PORT || 5000;
         app.listen(PORT, () => {
-            console.log(`🚀 Server is running on port ${PORT}`);
+            console.log(`🚀 Server running on port ${PORT}`);
         });
     })
     .catch(err => {
