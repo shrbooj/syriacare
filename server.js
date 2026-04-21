@@ -8,11 +8,10 @@ app.use('/images', express.static('images'));
 app.use(express.static(__dirname));
 app.use(express.json({ limit: '10mb' })); 
 
-/// This is your unique cloud key
 const MONGO_URI = "mongodb+srv://karimlaham232_db_user:karim.1234@cluster0.rcrmtnz.mongodb.net/syriacare?retryWrites=true&w=majority";
 
 // ==========================================
-// SCHEMAS (Database Structure)
+// SCHEMAS
 // ==========================================
 const productSchema = new mongoose.Schema({
     id: String, 
@@ -22,7 +21,7 @@ const productSchema = new mongoose.Schema({
     image: String,
     priceUSD: Number,
     originalTRY: Number,
-    description: String // Added description here to ensure it saves!
+    description: String 
 });
 const Product = mongoose.model('Product', productSchema);
 
@@ -42,7 +41,11 @@ const Order = mongoose.model('Order', orderSchema);
 // API ROUTES
 // ==========================================
 
-// GET all products
+// Health Check for Railway
+app.get('/', (req, res) => {
+    res.status(200).send('SyriaCare Express API is live! 🚀');
+});
+
 app.get('/api/products', async (req, res) => {
     try {
         const products = await Product.find({});
@@ -52,7 +55,6 @@ app.get('/api/products', async (req, res) => {
     }
 });
 
-// POST new product
 app.post('/api/products', async (req, res) => {
     try {
         const newProduct = new Product(req.body);
@@ -63,29 +65,21 @@ app.post('/api/products', async (req, res) => {
     }
 });
 
-// 🟢 FIXED: UPDATE product (Now checks for both _id and id)
 app.put('/api/products/:id', async (req, res) => {
     try {
         const isValidObjectId = mongoose.Types.ObjectId.isValid(req.params.id);
         const query = isValidObjectId ? { _id: req.params.id } : { id: req.params.id };
-
-        const updatedProduct = await Product.findOneAndUpdate(
-            query,
-            { $set: req.body },
-            { new: true }
-        );
+        const updatedProduct = await Product.findOneAndUpdate(query, { $set: req.body }, { new: true });
         res.json({ success: true, product: updatedProduct });
     } catch (error) {
         res.status(500).json({ error: "Failed to update" });
     }
 });
 
-// 🟢 FIXED: DELETE product (Now checks for both _id and id)
 app.delete('/api/products/:id', async (req, res) => {
     try {
         const isValidObjectId = mongoose.Types.ObjectId.isValid(req.params.id);
         const query = isValidObjectId ? { _id: req.params.id } : { id: req.params.id };
-
         await Product.deleteOne(query);
         res.json({ success: true });
     } catch (error) {
@@ -93,7 +87,6 @@ app.delete('/api/products/:id', async (req, res) => {
     }
 });
 
-// POST new order
 app.post('/api/orders', async (req, res) => {
     try {
         const newOrder = new Order(req.body);
@@ -104,7 +97,6 @@ app.post('/api/orders', async (req, res) => {
     }
 });
 
-// GET all orders
 app.get('/api/orders', async (req, res) => {
     try {
         const orders = await Order.find().sort({ date: -1 });
@@ -114,7 +106,7 @@ app.get('/api/orders', async (req, res) => {
     }
 });
 
-// GET orders by phone number
+// RESTORED: Get orders by phone
 app.get('/api/orders/phone/:phone', async (req, res) => {
     try {
         const userOrders = await Order.find({ phone: req.params.phone }).sort({ date: -1 });
@@ -124,38 +116,24 @@ app.get('/api/orders/phone/:phone', async (req, res) => {
     }
 });
 
-// UPDATE order status 
-app.put('/api/orders/:id', async (req, res) => {
-    try {
-        const updatedOrder = await Order.findByIdAndUpdate(
-            req.params.id,
-            { $set: { status: req.body.status } },
-            { new: true }
-        );
-        res.json({ success: true, order: updatedOrder });
-    } catch (error) {
-        res.status(500).json({ error: "Failed to update order status" });
-    }
+// ==========================================
+// CONNECT AND START
+// ==========================================
+const PORT = process.env.PORT || 5000;
+
+// Listen immediately so Railway sees the app as "Healthy"
+const server = app.listen(PORT, '0.0.0.0', () => {
+    console.log(`🚀 SUCCESS: Server is listening on port ${PORT}`); // Now using backticks!
+    
+    mongoose.connect(MONGO_URI)
+        .then(() => console.log("🟢 SUCCESS: Connected to MongoDB Atlas!"))
+        .catch(err => console.error("🔴 DATABASE CONNECTION ERROR:", err.message));
 });
 
-// ==========================================
-// CONNECT AND START
-// ==========================================
-// ==========================================
-// CONNECT AND START
-// ==========================================
-mongoose.connect(MONGO_URI)
-    .then(() => {
-        console.log("🟢 SUCCESS: Connected to MongoDB Atlas!");
-        
-        // Railway provides the PORT automatically
-        const PORT = process.env.PORT || 5000;
-        
-        // ADD '0.0.0.0' HERE
-        app.listen(PORT, '0.0.0.0', () => {
-            console.log("Server is running and accessible on port ${PORT}");
+process.on('SIGTERM', () => {
+    server.close(() => {
+        mongoose.connection.close(false, () => {
+            process.exit(0);
         });
-    })
-    .catch(err => {
-        console.error("🔴 CLOUD ERROR:", err);
     });
+});
