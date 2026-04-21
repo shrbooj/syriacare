@@ -8,11 +8,11 @@ app.use('/images', express.static('images'));
 app.use(express.static(__dirname));
 app.use(express.json({ limit: '10mb' })); 
 
-/// This is your unique cloud key
+/// Cloud Database URI
 const MONGO_URI = "mongodb+srv://karimlaham232_db_user:karim.1234@cluster0.rcrmtnz.mongodb.net/syriacare?retryWrites=true&w=majority";
 
 // ==========================================
-// SCHEMAS (Database Structure)
+// SCHEMAS
 // ==========================================
 const productSchema = new mongoose.Schema({
     id: String, 
@@ -42,56 +42,65 @@ const Order = mongoose.model('Order', orderSchema);
 // API ROUTES
 // ==========================================
 
-// 🟢 LIGHTWEIGHT PING ROUTE: Keeps Server and Database awake
+// 🟢 PING ROUTE: Keeps Server and DB awake
 app.get('/ping', async (req, res) => {
     try {
         await mongoose.connection.db.admin().ping();
-        res.status(200).send('Server and Database are both awake! 🚀');
+        res.status(200).send('Alive! 🚀');
     } catch (error) {
-        res.status(500).send('Server is awake, but Database failed to ping.');
+        res.status(500).send('DB Error');
     }
 });
 
-// 🟢 RAM CACHE VARIABLES
+// 🟢 SMART RAM CACHE
 let cachedProducts = null;
 let lastCacheTime = null;
+let isFetching = false;
 
-// GET all products (Optimized with .lean() and 5-minute RAM Cache)
+// GET all products (Instant from RAM)
 app.get('/api/products', async (req, res) => {
     try {
-        // 1. Check RAM Cache (Instant)
         if (cachedProducts && lastCacheTime > Date.now() - 300000) {
             console.log("⚡ RAM CACHE: Serving products instantly.");
             return res.json(cachedProducts);
         }
 
-        // 2. Otherwise, pull from MongoDB
-        console.log("🐢 DATABASE: Fetching started...");
-        console.time("⏱️ DB_Fetch_Duration"); // Starts a timer in your logs
+        if (isFetching) {
+            console.log("⚠️ BUSY: Fetch already in progress.");
+            return res.status(503).json({ message: "Syncing... please refresh in 5 seconds." });
+        }
 
-        // .lean() makes the query significantly faster by returning raw JSON instead of heavy Mongoose documents
+        isFetching = true;
+        console.log("🐢 DATABASE: Initial fetch started...");
+        console.time("⏱️ DB_Fetch");
+
         const products = await Product.find({}).lean();
         
-        console.timeEnd("⏱️ DB_Fetch_Duration"); // Tells you exactly how long it took
+        console.timeEnd("⏱️ DB_Fetch");
 
-        // 3. Save to memory for the next 5 minutes
         cachedProducts = products;
         lastCacheTime = Date.now();
+        isFetching = false;
         
         res.json(products);
     } catch (err) {
-        console.error("❌ ERROR fetching products:", err);
-        res.status(500).json({ message: "Error fetching products" });
+        isFetching = false;
+        res.status(500).json({ message: "Error fetching data" });
     }
 });
 
-// POST new product
+// 🟢 POST new product (Smart Cache: Updates memory without refetching)
 app.post('/api/products', async (req, res) => {
     try {
         const newProduct = new Product(req.body);
         await newProduct.save();
-        // Clear cache so new product shows up immediately
-        cachedProducts = null; 
+
+        // Manually update the cache in memory so we don't have to fetch 130MB again
+        if (cachedProducts) {
+            cachedProducts.push(newProduct.toObject());
+            console.log("✅ CACHE: Manually appended new product.");
+        }
+
         res.json({ message: "Product saved!", product: newProduct });
     } catch (err) {
         res.status(500).json({ message: "Error saving product" });
@@ -102,85 +111,55 @@ app.post('/api/products', async (req, res) => {
 app.put('/api/products/:id', async (req, res) => {
     try {
         const id = req.params.id;
-        const query = mongoose.Types.ObjectId.isValid(id) 
-            ? { $or: [{ _id: id }, { id: id }] } 
-            : { id: id };
-
-        const updatedProduct = await Product.findOneAndUpdate(
-            query,
-            { $set: req.body },
-            { new: true }
-        );
-
-        if (!updatedProduct) {
-            return res.status(404).json({ error: "Product not found." });
-        }
-
-        cachedProducts = null; // Clear cache
+        const query = mongoose.Types.ObjectId.isValid(id) ? { $or: [{ _id: id }, { id: id }] } : { id: id };
+        const updatedProduct = await Product.findOneAndUpdate(query, { $set: req.body }, { new: true });
+        
+        cachedProducts = null; // Forces a single fresh fetch for accuracy
         res.json({ success: true, product: updatedProduct });
-    } catch (error) {
-        res.status(500).json({ error: "Failed to update product" });
-    }
+    } catch (error) { res.status(500).json({ error: "Update failed" }); }
 });
 
 // DELETE product
 app.delete('/api/products/:id', async (req, res) => {
     try {
-        const query = mongoose.Types.ObjectId.isValid(req.params.id) 
-            ? { $or: [{ _id: req.params.id }, { id: req.params.id }] } 
-            : { id: req.params.id };
-
+        const query = mongoose.Types.ObjectId.isValid(req.params.id) ? { $or: [{ _id: req.params.id }, { id: req.params.id }] } : { id: req.params.id };
         await Product.deleteOne(query);
-        cachedProducts = null; // Clear cache
+        cachedProducts = null; // Forces a fresh fetch
         res.json({ success: true });
-    } catch (error) {
-        res.status(500).json({ error: "Failed to delete" });
-    }
+    } catch (error) { res.status(500).json({ error: "Delete failed" }); }
 });
 
-// POST new order
+// ==========================================
+// ORDER ROUTES
+// ==========================================
+
 app.post('/api/orders', async (req, res) => {
     try {
         const newOrder = new Order(req.body);
         await newOrder.save();
         res.json({ success: true, order: newOrder });
-    } catch (error) {
-        res.status(500).json({ error: "Failed to save order" });
-    }
+    } catch (error) { res.status(500).json({ error: "Order failed" }); }
 });
 
-// GET all orders (Optimized with .lean())
 app.get('/api/orders', async (req, res) => {
     try {
         const orders = await Order.find().sort({ date: -1 }).lean();
         res.json(orders);
-    } catch (error) {
-        res.status(500).json({ error: "Failed to fetch orders" });
-    }
+    } catch (error) { res.status(500).json({ error: "Fetch failed" }); }
 });
 
-// GET orders by phone (Optimized with .lean())
 app.get('/api/orders/phone/:phone', async (req, res) => {
     try {
         const userOrders = await Order.find({ phone: req.params.phone }).sort({ date: -1 }).lean();
         res.json(userOrders);
-    } catch (error) {
-        res.status(500).json({ error: "Failed to fetch user orders" });
-    }
+    } catch (error) { res.status(500).json({ error: "User fetch failed" }); }
 });
 
-// UPDATE order status 
 app.put('/api/orders/:id', async (req, res) => {
     try {
-        const updatedOrder = await Order.findByIdAndUpdate(
-            req.params.id,
-            { $set: { status: req.body.status } },
-            { new: true }
-        );
+        const updatedOrder = await Order.findByIdAndUpdate(req.params.id, { $set: { status: req.body.status } }, { new: true });
         res.json({ success: true, order: updatedOrder });
-    } catch (error) {
-        res.status(500).json({ error: "Failed to update order status" });
-    }
+    } catch (error) { res.status(500).json({ error: "Status update failed" }); }
 });
 
 // ==========================================
@@ -188,12 +167,8 @@ app.put('/api/orders/:id', async (req, res) => {
 // ==========================================
 mongoose.connect(MONGO_URI)
     .then(() => {
-        console.log("🟢 Connected to MongoDB Atlas!");
+        console.log("🟢 Connected to Atlas!");
         const PORT = process.env.PORT || 5000;
-        app.listen(PORT, () => {
-            console.log(`🚀 Server running on port ${PORT}`);
-        });
+        app.listen(PORT, () => console.log(`🚀 Port ${PORT}`));
     })
-    .catch(err => {
-        console.error("🔴 CLOUD ERROR:", err);
-    });
+    .catch(err => console.error("🔴 Connection Error:", err));
