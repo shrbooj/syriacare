@@ -5,7 +5,6 @@ const cors = require('cors');
 const app = express();
 app.use(cors()); 
 app.use('/images', express.static('images'));
-app.use(express.static(__dirname));
 app.use(express.json({ limit: '10mb' })); 
 
 const MONGO_URI = "mongodb+srv://karimlaham232_db_user:karim.1234@cluster0.rcrmtnz.mongodb.net/syriacare?retryWrites=true&w=majority";
@@ -107,33 +106,38 @@ app.get('/api/orders', async (req, res) => {
 });
 
 // RESTORED: Get orders by phone
-app.get('/api/orders/phone/:phone', async (req, res) => {
-    try {
-        const userOrders = await Order.find({ phone: req.params.phone }).sort({ date: -1 });
-        res.json(userOrders);
-    } catch (error) {
-        res.status(500).json({ error: "Failed to fetch user orders" });
-    }
+// 1. Root route for Railway's Health Check (ESSENTIAL)
+app.get('/', (req, res) => {
+    res.status(200).send('SyriaCare API is live and healthy! 🚀');
 });
 
-// ==========================================
-// CONNECT AND START
-// ==========================================
-const PORT = process.env.PORT || 5000;
+// 2. Define Port
+const PORT = process.env.PORT || 8080; 
 
-// Listen immediately so Railway sees the app as "Healthy"
+// 3. START LISTENING IMMEDIATELY 
+// We do NOT put mongoose.connect inside a .then() or before this.
 const server = app.listen(PORT, '0.0.0.0', () => {
-    console.log(`🚀 SUCCESS: Server is listening on port ${PORT}`); // Now using backticks!
-    
-    mongoose.connect(MONGO_URI)
-        .then(() => console.log("🟢 SUCCESS: Connected to MongoDB Atlas!"))
-        .catch(err => console.error("🔴 DATABASE CONNECTION ERROR:", err.message));
+    console.log(`🚀 SUCCESS: Server is listening on port ${PORT}`);
 });
 
+// 4. CONNECT TO DATABASE IN THE BACKGROUND
+// This allows the server to pass the health check while the DB connects
+mongoose.connect(MONGO_URI, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+    serverSelectionTimeoutMS: 5000 // Tell it to stop trying after 5 seconds
+})
+.then(() => {
+    console.log("🟢 SUCCESS: Connected to MongoDB Atlas!");
+})
+.catch(err => {
+    console.error("🔴 DATABASE CONNECTION ERROR:", err.message);
+});
+
+// 5. Graceful Shutdown
 process.on('SIGTERM', () => {
     server.close(() => {
-        mongoose.connection.close(false, () => {
-            process.exit(0);
-        });
+        mongoose.connection.close();
+        process.exit(0);
     });
 });
