@@ -83,9 +83,6 @@ tr:hover td { background: #fdfbff; }
 #toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: var(--secondary); color: #fff; font-weight: 800; padding: 12px 24px; border-radius: 24px; z-index: 3000; box-shadow: 0 6px 20px rgba(0,0,0,.2); opacity: 0; transition: opacity .3s, bottom .3s; pointer-events: none; }
 #toast.show { opacity: 1; bottom: 32px; }
 
-/* ── ERROR TOAST OVERRIDE ── */
-#toast.error-toast { background: #e74c3c; }
-
 /* ── LOADING ROW ── */
 .loading-row td { text-align: center; padding: 32px; color: #888; font-weight: 700; }
 
@@ -213,6 +210,7 @@ function switchTab(name) {
   document.getElementById(`tab-${name}`).classList.add('active');
   
   if (name === 'add') {
+    // If they manually click "Add Product" tab, ensure we clear edit mode
     document.getElementById('add-form').reset();
     document.getElementById('edit-id').value = "";
     document.getElementById('img-preview').style.display = 'none';
@@ -226,8 +224,7 @@ function switchTab(name) {
 // ── ORDERS ──
 async function fetchOrders() {
   try {
-    // 🟢 FIXED BROWSER CACHE BUG
-    const res = await fetch(`${API}/orders?timestamp=${Date.now()}`, { cache: 'no-store' });
+    const res = await fetch(`${API}/orders`);
     if (!res.ok) throw new Error();
     allOrders = await res.json();
     setDB(true);
@@ -279,16 +276,15 @@ async function updateStatus(id, sel) {
   sel.className = 'status-select st-' + sel.value.replace(/ /g,'-');
   try {
     await fetch(`${API}/orders/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status: sel.value }) });
-    showToast('Status updated ✅', false);
+    showToast('Status updated ✅');
     updateStats();
-  } catch { showToast('Update failed ❌', true); }
+  } catch { showToast('Update failed ❌'); }
 }
 
 // ── PRODUCTS ──
 async function fetchProducts() {
   try {
-    // 🟢 FIXED BROWSER CACHE BUG
-    const res = await fetch(`${API}/products?timestamp=${Date.now()}`, { cache: 'no-store' });
+    const res = await fetch(`${API}/products`);
     if (!res.ok) throw new Error();
     allProducts = await res.json();
     renderProductsTable(allProducts);
@@ -337,17 +333,18 @@ async function submitProduct(e) {
   e.preventDefault();
   const btn = document.getElementById('save-btn');
   const editId = document.getElementById('edit-id').value; 
-  const isUpdate = editId !== ""; 
+  const isUpdate = editId !== ""; // 🟢 FIX: Checks hidden ID, not button text!
   
   btn.disabled = true; 
   btn.textContent = 'Saving…';
 
   const imgUrl = document.getElementById('p-img-url').value.trim();
+  
   let finalImageData = base64ImageString;
   if (imgUrl) finalImageData = imgUrl;
   
   if (!finalImageData) {
-      showToast('Please provide an image URL or upload a file ❌', true);
+      showToast('Please provide an image URL or upload a file ❌');
       btn.disabled = false; 
       btn.textContent = isUpdate ? '💾 Update Product' : '➕ Save Product';
       return;
@@ -363,6 +360,7 @@ async function submitProduct(e) {
     description: document.getElementById('p-desc').value
   };
 
+  // Only assign a new random ID if it's a completely new product
   if (!isUpdate) {
       prod.id = Date.now().toString();
   }
@@ -377,25 +375,20 @@ async function submitProduct(e) {
     }
 
     const res = await fetch(url, { method: method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(prod) });
+    if (!res.ok) throw new Error();
     
-    // 🟢 FIXED SILENT FAIL BUG
-    if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData.error || "Update failed on server.");
-    }
-    
+    // Reset Form & State
     document.getElementById('add-form').reset();
     document.getElementById('img-preview').style.display = 'none';
-    document.getElementById('edit-id').value = ""; 
+    document.getElementById('edit-id').value = ""; // Clear out the edit ID
     base64ImageString = ""; 
     btn.textContent = '➕ Save Product';
 
     await fetchProducts(); 
-    showToast(isUpdate ? 'Product updated! ✅' : 'Product saved! ✅', false);
+    showToast(isUpdate ? 'Product updated! ✅' : 'Product saved! ✅');
     switchTab('manage'); 
-  } catch (error) { 
-    console.error(error);
-    showToast(isUpdate ? 'Error updating product ❌' : 'Error saving product ❌', true); 
+  } catch { 
+    showToast(isUpdate ? 'Error updating product ❌' : 'Error saving product ❌'); 
     btn.textContent = isUpdate ? '💾 Update Product' : '➕ Save Product';
   } finally { 
     btn.disabled = false; 
@@ -407,7 +400,8 @@ function prefillEdit(id) {
   if (!p) return;
   switchTab('add');
   
-  document.getElementById('edit-id').value = (p._id || p.id); // ALWAYS prioritize _id
+  // 🟢 FIX: Save the ID to the hidden input so we know it's an update
+  document.getElementById('edit-id').value = (p.id || p._id); 
   
   document.getElementById('p-name').value = p.name;
   document.getElementById('p-usd').value = p.priceUSD;
@@ -423,7 +417,7 @@ function prefillEdit(id) {
   previewImg(p.image);
   
   document.getElementById('save-btn').textContent = '💾 Update Product';
-  showToast('Loaded for editing 📝', false);
+  showToast('Loaded for editing 📝');
 }
 
 async function deleteProduct(id) {
@@ -431,8 +425,8 @@ async function deleteProduct(id) {
   try {
     await fetch(`${API}/products/${id}`, { method: 'DELETE' });
     await fetchProducts();
-    showToast('Product deleted ✅', false);
-  } catch { showToast('Error deleting ❌', true); }
+    showToast('Product deleted ✅');
+  } catch { showToast('Error deleting ❌'); }
 }
 
 function previewImg(url) {
@@ -446,15 +440,9 @@ function previewImg(url) {
 
 // ── TOAST ──
 let toastTimer;
-function showToast(msg, isError) {
+function showToast(msg) {
   const t = document.getElementById('toast');
-  t.textContent = msg; 
-  if (isError) {
-      t.classList.add('error-toast');
-  } else {
-      t.classList.remove('error-toast');
-  }
-  t.classList.add('show');
+  t.textContent = msg; t.classList.add('show');
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => t.classList.remove('show'), 2800);
 }
