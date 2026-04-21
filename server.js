@@ -3,10 +3,10 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 
 const app = express();
-app.use(cors());
+app.use(cors()); 
 app.use('/images', express.static('images'));
 app.use(express.static(__dirname));
-app.use(express.json({ limit: '10mb' }));
+app.use(express.json({ limit: '10mb' })); 
 
 /// This is your unique cloud key
 const MONGO_URI = "mongodb+srv://karimlaham232_db_user:karim.1234@cluster0.rcrmtnz.mongodb.net/syriacare?retryWrites=true&w=majority";
@@ -15,14 +15,14 @@ const MONGO_URI = "mongodb+srv://karimlaham232_db_user:karim.1234@cluster0.rcrmt
 // SCHEMAS (Database Structure)
 // ==========================================
 const productSchema = new mongoose.Schema({
-    id: String,
+    id: String, 
     name: String,
     category: String,
     store: String,
     image: String,
     priceUSD: Number,
     originalTRY: Number,
-    description: String // Added description here to ensure it saves!
+    description: String 
 });
 const Product = mongoose.model('Product', productSchema);
 
@@ -33,7 +33,7 @@ const orderSchema = new mongoose.Schema({
     location: String,
     items: Array,
     total: Number,
-    status: { type: String, default: 'Pending' },
+    status: { type: String, default: 'Pending' }, 
     date: { type: Date, default: Date.now }
 });
 const Order = mongoose.model('Order', orderSchema);
@@ -52,30 +52,6 @@ app.get('/api/products', async (req, res) => {
     }
 });
 
-// PROXY ROUTE (Solves CORS and third-party proxy blocking)
-app.get('/api/proxy', async (req, res) => {
-    try {
-        const targetUrl = req.query.url;
-        if (!targetUrl) return res.status(400).json({ error: "No URL provided" });
-
-        // Use native fetch to get the page with a browser-like User-Agent
-        const response = await fetch(targetUrl, {
-            headers: {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
-                'Accept-Language': 'en-US,en;q=0.5'
-            }
-        });
-
-        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-        const html = await response.text();
-        res.send(html);
-    } catch (error) {
-        console.error("Proxy error:", error);
-        res.status(500).json({ error: "Failed to fetch from target URL" });
-    }
-});
-
 // POST new product
 app.post('/api/products', async (req, res) => {
     try {
@@ -87,28 +63,39 @@ app.post('/api/products', async (req, res) => {
     }
 });
 
-// 🟢 FIXED: UPDATE product (Now checks for both _id and id)
+// 🟢 BULLETPROOF UPDATE ROUTE
 app.put('/api/products/:id', async (req, res) => {
     try {
-        const isValidObjectId = mongoose.Types.ObjectId.isValid(req.params.id);
-        const query = isValidObjectId ? { _id: req.params.id } : { id: req.params.id };
+        const id = req.params.id;
+        
+        // Smart query: Checks both Mongo _id and custom id
+        const query = mongoose.Types.ObjectId.isValid(id) 
+            ? { $or: [{ _id: id }, { id: id }] } 
+            : { id: id };
 
         const updatedProduct = await Product.findOneAndUpdate(
             query,
             { $set: req.body },
             { new: true }
         );
+
+        // If it couldn't find the product, throw a 404 error instead of pretending it worked!
+        if (!updatedProduct) {
+            return res.status(404).json({ error: "Product not found in DB." });
+        }
+
         res.json({ success: true, product: updatedProduct });
     } catch (error) {
-        res.status(500).json({ error: "Failed to update" });
+        res.status(500).json({ error: "Failed to update product in database" });
     }
 });
 
-// 🟢 FIXED: DELETE product (Now checks for both _id and id)
+// DELETE product
 app.delete('/api/products/:id', async (req, res) => {
     try {
-        const isValidObjectId = mongoose.Types.ObjectId.isValid(req.params.id);
-        const query = isValidObjectId ? { _id: req.params.id } : { id: req.params.id };
+        const query = mongoose.Types.ObjectId.isValid(req.params.id) 
+            ? { $or: [{ _id: req.params.id }, { id: req.params.id }] } 
+            : { id: req.params.id };
 
         await Product.deleteOne(query);
         res.json({ success: true });
