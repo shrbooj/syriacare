@@ -48,7 +48,7 @@ app.get('/', (req, res) => {
 app.get('/api/products', async (req, res) => {
     try { 
         // We added .limit(5) right after find({})
-        res.json(await Product.find({}).select('-image')); 
+        res.json(await Product.find({})); 
     }
     catch (err) { res.status(500).json({ message: "Error fetching products" }); }
 });
@@ -112,6 +112,18 @@ app.get('/api/orders/phone/:phone', async (req, res) => {
     catch (error) { 
         res.status(500).json({ error: "Failed to fetch user orders" }); 
     }
+});
+// TEMPORARY: Nuke all Base64 images
+app.get('/api/nuke-images', async (req, res) => {
+    try {
+        // This finds EVERY product and sets the image field to an empty string
+        const result = await Product.updateMany({}, { $set: { image: "" } });
+        res.json({ 
+            message: "All images wiped successfully! 💣", 
+            productsFixed: result.modifiedCount 
+        });
+    }
+    catch (err) { res.status(500).json({ error: "Failed to wipe images" }); }
 });
 
 // 2. Define Port
