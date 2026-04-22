@@ -113,18 +113,6 @@ app.get('/api/orders/phone/:phone', async (req, res) => {
         res.status(500).json({ error: "Failed to fetch user orders" }); 
     }
 });
-// TEMPORARY: Nuke all Base64 images
-app.get('/api/nuke-images', async (req, res) => {
-    try {
-        // This finds EVERY product and sets the image field to an empty string
-        const result = await Product.updateMany({}, { $set: { image: "" } });
-        res.json({ 
-            message: "All images wiped successfully! 💣", 
-            productsFixed: result.modifiedCount 
-        });
-    }
-    catch (err) { res.status(500).json({ error: "Failed to wipe images" }); }
-});
 
 // 2. Define Port
 const PORT = process.env.PORT || 8080; 
