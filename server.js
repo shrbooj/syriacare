@@ -48,7 +48,7 @@ app.get('/', (req, res) => {
 app.get('/api/products', async (req, res) => {
     try { 
         // We added .limit(5) right after find({})
-        res.json(await Product.find({}).limit(5)); 
+        res.json(await Product.find({}).select('-image')); 
     }
     catch (err) { res.status(500).json({ message: "Error fetching products" }); }
 });
@@ -105,9 +105,13 @@ app.get('/api/orders', async (req, res) => {
 });
 
 // RESTORED: Get orders by phone
-// 1. Root route for Railway's Health Check (ESSENTIAL)
-app.get('/', (req, res) => {
-    res.status(200).send('SyriaCare API is live and healthy! 🚀');
+app.get('/api/orders/phone/:phone', async (req, res) => {
+    try { 
+        res.json(await Order.find({ phone: req.params.phone }).sort({ date: -1 })); 
+    }
+    catch (error) { 
+        res.status(500).json({ error: "Failed to fetch user orders" }); 
+    }
 });
 
 // 2. Define Port
@@ -124,7 +128,8 @@ const server = app.listen(PORT, '0.0.0.0', () => {
 mongoose.connect(MONGO_URI, {
     useNewUrlParser: true,
     useUnifiedTopology: true,
-    serverSelectionTimeoutMS: 5000 // Tell it to stop trying after 5 seconds
+    serverSelectionTimeoutMS: 5000, // Tell it to stop trying after 5 seconds
+    family: 4
 })
 .then(() => {
     console.log("🟢 SUCCESS: Connected to MongoDB Atlas!");
