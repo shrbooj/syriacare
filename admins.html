@@ -43,6 +43,7 @@ body { font-family: 'Nunito', sans-serif; background: var(--bg); color: #1a1a2e;
 .stat-card.s2 .stat-val { color: var(--secondary); }
 .stat-card.s3 .stat-val { color: #f39c12; }
 .stat-card.s4 .stat-val { color: #27ae60; }
+.stat-card.s5 .stat-val { color: #3498db; }
 
 /* ── TABLE ── */
 .table-wrap { background: #fff; border-radius: 14px; box-shadow: 0 2px 12px rgba(74,20,140,.06); overflow: hidden; border: 1px solid var(--border); }
@@ -83,9 +84,7 @@ tr:hover td { background: #fdfbff; }
 #toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: var(--secondary); color: #fff; font-weight: 800; padding: 12px 24px; border-radius: 24px; z-index: 3000; box-shadow: 0 6px 20px rgba(0,0,0,.2); opacity: 0; transition: opacity .3s, bottom .3s; pointer-events: none; }
 #toast.show { opacity: 1; bottom: 32px; }
 
-/* ── LOADING ROW ── */
 .loading-row td { text-align: center; padding: 32px; color: #888; font-weight: 700; }
-
 .img-options { margin-top: 5px; font-size: 0.8rem; color: #777; }
 </style>
 </head>
@@ -97,12 +96,17 @@ tr:hover td { background: #fdfbff; }
     <div class="sidebar-logo-sub">Admin Panel</div>
   </div>
   <div class="db-badge" id="db-badge">● Connecting…</div>
+  
   <div class="nav-section">Management</div>
   <div class="nav-item active" id="tab-orders" onclick="switchTab('orders')"><span class="icon">📦</span> Orders</div>
+  
+  <div class="nav-item" id="tab-users" onclick="switchTab('users')"><span class="icon">👥</span> Customers</div>
+  
   <div class="nav-item" id="tab-add" onclick="switchTab('add')"><span class="icon">➕</span> Add Product</div>
   <div class="nav-item" id="tab-manage" onclick="switchTab('manage')"><span class="icon">🗂️</span> Products</div>
+  
   <div class="sidebar-footer">
-    <a href="wastons.html">🌍 View Live Store</a>
+    <a href="watsons.html">🌍 View Live Store</a>
   </div>
 </div>
 
@@ -131,12 +135,31 @@ tr:hover td { background: #fdfbff; }
     </div>
   </div>
 
+  <div id="page-users" class="page">
+    <div class="page-title">Registered Customers</div>
+    <div class="stats">
+      <div class="stat-card s5"><div class="stat-val" id="stat-users-total">—</div><div class="stat-label">Total Registered Accounts</div></div>
+    </div>
+    <div class="table-wrap">
+      <div class="table-head">
+        <h3>All Users</h3>
+        <div class="table-search">
+          <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+          <input type="text" placeholder="Search name or phone…" oninput="filterUsers(this.value)">
+        </div>
+      </div>
+      <table>
+        <thead><tr><th>Joined Date</th><th>Full Name</th><th>Phone Number</th><th>Delivery Address</th></tr></thead>
+        <tbody id="users-tbody"><tr class="loading-row"><td colspan="4">Loading users…</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
   <div id="page-add" class="page">
     <div class="page-title">Add/Edit Product</div>
     <div class="form-card">
       <form onsubmit="submitProduct(event)" id="add-form">
         <input type="hidden" id="edit-id" value="">
-        
         <div class="fgroup"><label>Product Name</label><input type="text" id="p-name" required placeholder="e.g. Beaulis Mascara"></div>
         <div class="row">
           <div class="fgroup"><label>Price (USD)</label><input type="number" id="p-usd" step="0.01" required placeholder="5.99"></div>
@@ -154,14 +177,12 @@ tr:hover td { background: #fdfbff; }
             <select id="p-store"><option>Gratis</option><option>Watsons</option></select>
           </div>
         </div>
-        
         <div class="fgroup">
           <label>Product Image</label>
           <input type="file" id="p-img-file" accept="image/*" style="background: #f9f9f9; padding: 5px;" onchange="handleFileUpload(event)">
           <div class="img-options">OR paste a Web URL:</div>
           <input type="url" id="p-img-url" placeholder="https://example.com/product.jpg" oninput="previewImg(this.value)">
         </div>
-        
         <div id="img-preview" style="margin-bottom:14px;display:none">
           <img id="preview-img" style="max-height:120px;border-radius:10px;background:var(--bg);object-fit:contain">
         </div>
@@ -194,15 +215,14 @@ tr:hover td { background: #fdfbff; }
 
 <script>
 const API = 'https://syriacare-production.up.railway.app/api';
-let allOrders = [], allProducts = [];
+let allOrders = [], allProducts = [], allUsers = [];
 let base64ImageString = ""; 
 
 // ── INIT ──
 async function init() {
-  await Promise.all([fetchOrders(), fetchProducts()]);
+  await Promise.all([fetchOrders(), fetchProducts(), fetchUsers()]);
 }
 
-// ── TABS ──
 function switchTab(name) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
@@ -210,15 +230,47 @@ function switchTab(name) {
   document.getElementById(`tab-${name}`).classList.add('active');
   
   if (name === 'add') {
-    // If they manually click "Add Product" tab, ensure we clear edit mode
     document.getElementById('add-form').reset();
     document.getElementById('edit-id').value = "";
     document.getElementById('img-preview').style.display = 'none';
     base64ImageString = "";
     document.getElementById('save-btn').textContent = '➕ Save Product';
   }
-  
   if (name === 'manage') renderProductsTable(allProducts);
+  if (name === 'users') renderUsersTable(allUsers);
+}
+
+// 🟢 NEW: FETCH USERS
+async function fetchUsers() {
+  try {
+    const res = await fetch(`${API}/users`);
+    if (!res.ok) throw new Error();
+    allUsers = await res.json();
+    document.getElementById('stat-users-total').textContent = allUsers.length;
+    renderUsersTable(allUsers);
+  } catch {}
+}
+
+function renderUsersTable(list) {
+  const tb = document.getElementById('users-tbody');
+  if (!list.length) { tb.innerHTML = '<tr class="loading-row"><td colspan="4">No users found.</td></tr>'; return; }
+  
+  let html = '';
+  list.forEach(u => {
+    const date = new Date(u.date).toLocaleDateString();
+    html += `<tr>
+      <td>${date}</td>
+      <td><strong>${u.name||'—'} ${u.surname||''}</strong></td>
+      <td>${u.phone||'—'}</td>
+      <td style="max-width: 250px;">${u.address||'—'}</td>
+    </tr>`;
+  });
+  tb.innerHTML = html;
+}
+
+function filterUsers(q) {
+  const f = allUsers.filter(u => `${u.name} ${u.surname} ${u.phone}`.toLowerCase().includes(q.toLowerCase()));
+  renderUsersTable(f);
 }
 
 // ── ORDERS ──
@@ -249,7 +301,6 @@ function updateStats() {
 function renderOrdersTable(orders) {
   const tb = document.getElementById('orders-tbody');
   if (!orders.length) { tb.innerHTML = '<tr class="loading-row"><td colspan="6">No orders yet.</td></tr>'; return; }
-  
   let html = '';
   orders.forEach(o => {
     const statuses = ['Pending','Accepted','On the Way','Delivered','Cancelled'];
@@ -293,11 +344,9 @@ async function fetchProducts() {
 function renderProductsTable(list) {
   const tb = document.getElementById('products-tbody');
   if (!list.length) { tb.innerHTML = '<tr class="loading-row"><td colspan="6">No products.</td></tr>'; return; }
-  
   let html = '';
   list.forEach(p => {
-    html += `
-    <tr>
+    html += `<tr>
       <td><img class="thumb" src="${p.image}" alt="${p.name}" onerror="this.style.display='none'"></td>
       <td><strong>${p.name}</strong>${p.description?`<br><span style="font-size:.75rem;color:#888">${p.description.substring(0,50)}…</span>`:''}</td>
       <td>${p.category||'—'}</td>
@@ -315,7 +364,6 @@ function filterProducts(q) {
   const f = allProducts.filter(p => p.name.toLowerCase().includes(q.toLowerCase()));
   renderProductsTable(f);
 }
-
 function handleFileUpload(event) {
   const file = event.target.files[0];
   if (file) {
@@ -328,28 +376,22 @@ function handleFileUpload(event) {
     reader.readAsDataURL(file);
   }
 }
-
 async function submitProduct(e) {
   e.preventDefault();
   const btn = document.getElementById('save-btn');
   const editId = document.getElementById('edit-id').value; 
-  const isUpdate = editId !== ""; // 🟢 FIX: Checks hidden ID, not button text!
+  const isUpdate = editId !== "";
   
-  btn.disabled = true; 
-  btn.textContent = 'Saving…';
-
+  btn.disabled = true; btn.textContent = 'Saving…';
   const imgUrl = document.getElementById('p-img-url').value.trim();
-  
   let finalImageData = base64ImageString;
   if (imgUrl) finalImageData = imgUrl;
   
   if (!finalImageData) {
       showToast('Please provide an image URL or upload a file ❌');
-      btn.disabled = false; 
-      btn.textContent = isUpdate ? '💾 Update Product' : '➕ Save Product';
+      btn.disabled = false; btn.textContent = isUpdate ? '💾 Update Product' : '➕ Save Product';
       return;
   }
-
   const prod = {
     name: document.getElementById('p-name').value,
     priceUSD: parseFloat(document.getElementById('p-usd').value),
@@ -359,67 +401,45 @@ async function submitProduct(e) {
     image: finalImageData,
     description: document.getElementById('p-desc').value
   };
-
-  // Only assign a new random ID if it's a completely new product
-  if (!isUpdate) {
-      prod.id = Date.now().toString();
-  }
+  if (!isUpdate) prod.id = Date.now().toString();
 
   try {
-    let url = `${API}/products`;
-    let method = 'POST';
-    
-    if (isUpdate) {
-        url = `${API}/products/${editId}`;
-        method = 'PUT';
-    }
+    let url = isUpdate ? `${API}/products/${editId}` : `${API}/products`;
+    let method = isUpdate ? 'PUT' : 'POST';
 
     const res = await fetch(url, { method: method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(prod) });
     if (!res.ok) throw new Error();
     
-    // Reset Form & State
     document.getElementById('add-form').reset();
     document.getElementById('img-preview').style.display = 'none';
-    document.getElementById('edit-id').value = ""; // Clear out the edit ID
-    base64ImageString = ""; 
-    btn.textContent = '➕ Save Product';
-
+    document.getElementById('edit-id').value = "";
+    base64ImageString = ""; btn.textContent = '➕ Save Product';
     await fetchProducts(); 
     showToast(isUpdate ? 'Product updated! ✅' : 'Product saved! ✅');
     switchTab('manage'); 
   } catch { 
     showToast(isUpdate ? 'Error updating product ❌' : 'Error saving product ❌'); 
     btn.textContent = isUpdate ? '💾 Update Product' : '➕ Save Product';
-  } finally { 
-    btn.disabled = false; 
-  }
+  } finally { btn.disabled = false; }
 }
-
 function prefillEdit(id) {
   const p = allProducts.find(x => (x._id||x.id) === id);
   if (!p) return;
   switchTab('add');
-  
-  // 🟢 FIX: Save the ID to the hidden input so we know it's an update
   document.getElementById('edit-id').value = (p.id || p._id); 
-  
   document.getElementById('p-name').value = p.name;
   document.getElementById('p-usd').value = p.priceUSD;
   document.getElementById('p-try').value = p.originalTRY;
   document.getElementById('p-cat').value = p.category;
   document.getElementById('p-store').value = p.store;
   document.getElementById('p-desc').value = p.description || '';
-  
   document.getElementById('p-img-file').value = '';
   base64ImageString = "";
-  
   document.getElementById('p-img-url').value = p.image;
   previewImg(p.image);
-  
   document.getElementById('save-btn').textContent = '💾 Update Product';
   showToast('Loaded for editing 📝');
 }
-
 async function deleteProduct(id) {
   if (!confirm('Permanently delete this product?')) return;
   try {
@@ -428,7 +448,6 @@ async function deleteProduct(id) {
     showToast('Product deleted ✅');
   } catch { showToast('Error deleting ❌'); }
 }
-
 function previewImg(url) {
   const wrap = document.getElementById('img-preview');
   const img = document.getElementById('preview-img');
@@ -438,7 +457,6 @@ function previewImg(url) {
   img.onload = () => { wrap.style.display = 'block'; };
 }
 
-// ── TOAST ──
 let toastTimer;
 function showToast(msg) {
   const t = document.getElementById('toast');
