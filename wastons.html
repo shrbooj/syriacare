@@ -122,7 +122,6 @@
     .form-group { margin-bottom: 15px; text-align: start; }
     .form-group label { display: block; margin-bottom: 6px; font-weight: 800; font-size: 0.85rem; color: #555;}
     
-    /* 🟢 UPDATED: Included textarea styling so it matches the inputs */
     .form-group input, .form-group textarea { width: 100%; padding: 12px; border: 2px solid #eee; border-radius: 8px; box-sizing: border-box; font-family: inherit; transition: 0.2s; outline: none; background: #fafafa; font-weight: 600;}
     .form-group input:focus, .form-group textarea:focus { border-color: var(--primary); background: white;}
     .form-group textarea { resize: vertical; min-height: 80px; }
@@ -369,9 +368,8 @@
         let cart = JSON.parse(localStorage.getItem('syriaCareCart')) || [];
         let activeCategory = 'All';
         
-        // 🟢 Loads users from local browser memory
+        // Load active session from browser memory
         let currentUser = JSON.parse(localStorage.getItem('syriaCareUser')) || null;
-        let mockDatabase = JSON.parse(localStorage.getItem('syriaCareDB')) || [];
 
         let currentPage = 1;
         const PRODUCTS_PER_PAGE = 24;
@@ -485,11 +483,12 @@
             }
         }
 
-        // 🟢 UPDATED: Registration with Strict Validation
-        function handleRegister(e) {
+        // 🟢 LIVE REGISTRATION: Sends data to your MongoDB Server
+        async function handleRegister(e) {
             e.preventDefault();
             const errorDiv = document.getElementById('reg-error');
             errorDiv.style.display = 'none';
+            const submitBtn = e.target.querySelector('button[type="submit"]');
 
             try {
                 const name = document.getElementById('reg-name').value.trim();
@@ -498,33 +497,46 @@
                 const address = document.getElementById('reg-address').value.trim();
                 const password = document.getElementById('reg-password').value;
 
-                // 1. Phone Validation: Only numbers, exactly 9 or 10 digits
+                // 1. Phone Validation
                 const phoneRegex = /^\d{9,10}$/;
                 if (!phoneRegex.test(phone)) {
                     errorDiv.innerText = currentLang === 'ar' 
-                        ? '❌ يجب أن يتكون رقم الهاتف من 9 أو 10 أرقام فقط (لا يُسمح بأحرف أو رموز).' 
+                        ? '❌ يجب أن يتكون رقم الهاتف من 9 أو 10 أرقام فقط (بدون أحرف).' 
                         : '❌ Phone number must be exactly 9 or 10 digits (numbers only).';
                     errorDiv.style.display = 'block';
                     return;
                 }
 
-                // 2. Address Validation: Must be detailed enough
+                // 2. Address Validation
                 if (address.length < 10) {
                     errorDiv.innerText = currentLang === 'ar' 
                         ? '❌ يرجى كتابة عنوان التوصيل بالكامل (المدينة، الحي، الشارع، البناء).' 
-                        : '❌ Please provide your full delivery address (City, Neighborhood, Street, Building).';
+                        : '❌ Please provide your full delivery address.';
                     errorDiv.style.display = 'block';
                     return;
                 }
 
-                // 3. Create User and Save locally
-                const user = { name, surname, phone, password, address };
-                mockDatabase.push(user);
-                
-                // Save database to browser memory
-                localStorage.setItem('syriaCareDB', JSON.stringify(mockDatabase));
-                
-                loginUser(user);
+                submitBtn.disabled = true;
+                submitBtn.innerText = currentLang === 'ar' ? 'جاري التحميل...' : 'Loading...';
+
+                // Send to Server
+                const response = await fetch(`${API}/users/register`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, surname, phone, address, password })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    errorDiv.innerText = `❌ ${data.error || 'Registration failed'}`;
+                    errorDiv.style.display = 'block';
+                    submitBtn.disabled = false;
+                    submitBtn.innerText = currentLang === 'ar' ? 'انضم الآن' : 'Join Now';
+                    return;
+                }
+
+                loginUser(data.user);
                 toggleModal('register-modal');
                 e.target.reset(); // clear form
                 
@@ -537,30 +549,56 @@
 
             } catch (error) {
                 console.error("Registration Error:", error);
+                errorDiv.innerText = '❌ Network error. Please try again.';
+                errorDiv.style.display = 'block';
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerText = currentLang === 'ar' ? 'انضم الآن' : 'Join Now';
             }
         }
 
-        // 🟢 UPDATED: Login Error Handling
-        function handleLogin(e) {
+        // 🟢 LIVE LOGIN: Verifies against your MongoDB Server
+        async function handleLogin(e) {
             e.preventDefault();
             const errorDiv = document.getElementById('login-error');
             errorDiv.style.display = 'none';
+            const submitBtn = e.target.querySelector('button[type="submit"]');
 
             const phone = document.getElementById('login-phone').value.trim();
-            const pass = document.getElementById('login-password').value;
-            
-            // Check if user exists in the local database
-            const user = mockDatabase.find(u => u.phone === phone && u.password === pass);
-            
-            if (user) { 
-                loginUser(user); 
+            const password = document.getElementById('login-password').value;
+
+            submitBtn.disabled = true;
+            submitBtn.innerText = currentLang === 'ar' ? 'جاري التحميل...' : 'Loading...';
+
+            try {
+                // Send credentials to Server
+                const response = await fetch(`${API}/users/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ phone, password })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    errorDiv.innerText = currentLang === 'ar' 
+                        ? '❌ رقم الهاتف أو كلمة المرور غير صحيحة.' 
+                        : '❌ Invalid phone number or password.';
+                    errorDiv.style.display = 'block';
+                    submitBtn.disabled = false;
+                    submitBtn.innerText = currentLang === 'ar' ? 'تسجيل الدخول' : 'Sign In';
+                    return;
+                }
+
+                loginUser(data.user); 
                 toggleModal('login-modal'); 
                 e.target.reset();
-            } else { 
-                errorDiv.innerText = currentLang === 'ar' 
-                    ? '❌ رقم الهاتف أو كلمة المرور غير صحيحة.' 
-                    : '❌ Invalid phone number or password.';
+            } catch (error) {
+                errorDiv.innerText = '❌ Network error. Please try again.';
                 errorDiv.style.display = 'block';
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerText = currentLang === 'ar' ? 'تسجيل الدخول' : 'Sign In';
             }
         }
 
@@ -918,7 +956,7 @@
                     if (order.status === 'Delivered') statusColor = '#2ecc71';
                     if (order.status === 'Cancelled') statusColor = '#e74c3c';
                     const statusText = order.status || 'Pending';
-                    const dateText = new Date(order.createdAt).toLocaleDateString();
+                    const dateText = new Date(order.createdAt || order.date).toLocaleDateString();
                     list.innerHTML += `
                         <div style="border: 1.5px solid #eee; border-radius: 12px; padding: 15px; background: #fafafa; text-align: left;">
                             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
