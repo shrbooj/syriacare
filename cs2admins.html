@@ -78,7 +78,6 @@ tr:hover td { background: #fdfbff; }
 .btn-edit { background: #fff3e0; color: #d35400; border: none; padding: 6px 12px; border-radius: 6px; font-weight: 800; font-size: .78rem; cursor: pointer; font-family: inherit; }
 .btn-del { background: #ffebee; color: #c0392b; border: none; padding: 6px 12px; border-radius: 6px; font-weight: 800; font-size: .78rem; cursor: pointer; font-family: inherit; margin-left: 6px; }
 
-/* 🟢 NEW: Checkbox styling */
 .checkbox-wrap { display: flex; align-items: center; gap: 10px; padding: 12px 14px; background: #fdfbff; border: 2px solid var(--border); border-radius: 9px; cursor: pointer; user-select: none; margin-bottom: 14px; }
 .checkbox-wrap input { width: 18px; height: 18px; cursor: pointer; accent-color: var(--primary); }
 .checkbox-wrap label { margin: 0 !important; cursor: pointer; font-weight: 800 !important; color: var(--primary) !important; font-size: 0.95rem !important; }
@@ -103,7 +102,7 @@ tr:hover td { background: #fdfbff; }
   <div class="nav-item" id="tab-add" onclick="switchTab('add')"><span class="icon">➕</span> Add Product</div>
   <div class="nav-item" id="tab-manage" onclick="switchTab('manage')"><span class="icon">🗂️</span> Products</div>
   <div class="sidebar-footer">
-    <a href="watsons.html">🌍 View Live Store</a>
+    <a href="index.html">🌍 View Live Store</a>
   </div>
 </div>
 
@@ -241,7 +240,7 @@ function switchTab(name) {
     document.getElementById('add-form').reset();
     document.getElementById('edit-id').value = "";
     document.getElementById('img-preview').style.display = 'none';
-    document.getElementById('p-instock').checked = true; // 🟢 Reset to True
+    document.getElementById('p-instock').checked = true;
     base64ImageString = "";
     document.getElementById('save-btn').textContent = '➕ Save Product';
   }
@@ -289,17 +288,20 @@ async function fetchOrders() {
     document.getElementById('orders-tbody').innerHTML = '<tr class="loading-row"><td colspan="6">⚠️ Could not connect to server.</td></tr>';
   }
 }
+
 function setDB(ok) {
   const b = document.getElementById('db-badge');
   b.textContent = ok ? '● Connected to MongoDB' : '● Server Offline';
   b.className = 'db-badge' + (ok ? '' : ' offline');
 }
+
 function updateStats() {
   document.getElementById('stat-total').textContent = allOrders.length;
   document.getElementById('stat-pending').textContent = allOrders.filter(o => !o.status || o.status === 'Pending').length;
   document.getElementById('stat-way').textContent = allOrders.filter(o => o.status === 'On the Way').length;
   document.getElementById('stat-done').textContent = allOrders.filter(o => o.status === 'Delivered').length;
 }
+
 function renderOrdersTable(orders) {
   const tb = document.getElementById('orders-tbody');
   if (!orders.length) { tb.innerHTML = '<tr class="loading-row"><td colspan="6">No orders yet.</td></tr>'; return; }
@@ -309,26 +311,46 @@ function renderOrdersTable(orders) {
     const opts = statuses.map(s => `<option value="${s}" ${o.status===s?'selected':''}>${s}</option>`).join('');
     const cls = 'st-' + (o.status||'Pending').replace(/ /g,'-');
     const items = (o.items||[]).map(x => `<li>${x.name||x} ×${x.quantity||1}</li>`).join('');
+    
+    // 🟢 NEW: Added the delete button div right next to the status select
     html += `<tr>
       <td>${new Date(o.createdAt||o.date).toLocaleDateString()}</td>
       <td><strong>${o.name||'—'} ${o.surname||''}</strong></td>
       <td>${o.phone||'—'}</td>
       <td><strong>${(o.total||0).toLocaleString()}</strong></td>
       <td><ul style="padding-left:14px;font-size:.78rem;color:#555">${items||'<li>—</li>'}</ul></td>
-      <td><select class="status-select ${cls}" onchange="updateStatus('${o._id}',this)">${opts}</select></td>
+      <td>
+        <div style="display: flex; gap: 8px; align-items: center;">
+            <select class="status-select ${cls}" onchange="updateStatus('${o._id}',this)">${opts}</select>
+            <button class="btn-del" style="margin: 0; padding: 6px;" onclick="deleteOrder('${o._id}')">🗑️</button>
+        </div>
+      </td>
     </tr>`;
   });
   tb.innerHTML = html;
 }
+
 function filterOrders(q) {
   renderOrdersTable(allOrders.filter(o => `${o.name} ${o.surname} ${o.phone}`.toLowerCase().includes(q.toLowerCase())));
 }
+
 async function updateStatus(id, sel) {
   sel.className = 'status-select st-' + sel.value.replace(/ /g,'-');
   try {
     await fetch(`${API}/orders/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status: sel.value }) });
     showToast('Status updated ✅'); updateStats();
   } catch { showToast('Update failed ❌'); }
+}
+
+// 🟢 NEW: Function to delete an order
+async function deleteOrder(id) {
+  if (!confirm('Are you sure you want to permanently delete this order?')) return;
+  try {
+    const res = await fetch(`${API}/orders/${id}`, { method: 'DELETE' });
+    if (!res.ok) throw new Error();
+    await fetchOrders(); 
+    showToast('Order deleted ✅');
+  } catch { showToast('Error deleting order ❌'); }
 }
 
 async function fetchProducts() {
@@ -347,7 +369,6 @@ function renderProductsTable(list) {
   if (!list.length) { tb.innerHTML = '<tr class="loading-row"><td colspan="6">No products.</td></tr>'; return; }
   let html = '';
   list.forEach(p => {
-    // 🟢 NEW: Creates the Badge UI
     const stockBadge = p.inStock === false 
         ? '<span style="background:#ffebee; color:#c0392b; padding:4px 8px; border-radius:12px; font-size:0.7rem; font-weight:bold;">Out</span>'
         : '<span style="background:#e8f8f5; color:#27ae60; padding:4px 8px; border-radius:12px; font-size:0.7rem; font-weight:bold;">In Stock</span>';
@@ -366,9 +387,11 @@ function renderProductsTable(list) {
   });
   tb.innerHTML = html;
 }
+
 function filterProducts(q) {
   renderProductsTable(allProducts.filter(p => p.name.toLowerCase().includes(q.toLowerCase())));
 }
+
 function handleFileUpload(event) {
   const file = event.target.files[0];
   if (file) {
@@ -406,7 +429,7 @@ async function submitProduct(e) {
     store: document.getElementById('p-store').value,
     image: finalImageData,
     description: document.getElementById('p-desc').value,
-    inStock: document.getElementById('p-instock').checked // 🟢 NEW: Save the stock value
+    inStock: document.getElementById('p-instock').checked
   };
   if (!isUpdate) prod.id = Date.now().toString();
 
@@ -420,7 +443,7 @@ async function submitProduct(e) {
     document.getElementById('add-form').reset();
     document.getElementById('img-preview').style.display = 'none';
     document.getElementById('edit-id').value = "";
-    document.getElementById('p-instock').checked = true; // 🟢 Reset
+    document.getElementById('p-instock').checked = true; 
     base64ImageString = ""; btn.textContent = '➕ Save Product';
     
     await fetchProducts(); 
@@ -444,7 +467,6 @@ function prefillEdit(id) {
   document.getElementById('p-store').value = p.store;
   document.getElementById('p-desc').value = p.description || '';
   
-  // 🟢 NEW: Load the stock status into the toggle
   document.getElementById('p-instock').checked = p.inStock !== false; 
   
   document.getElementById('p-img-file').value = '';
@@ -454,6 +476,7 @@ function prefillEdit(id) {
   document.getElementById('save-btn').textContent = '💾 Update Product';
   showToast('Loaded for editing 📝');
 }
+
 async function deleteProduct(id) {
   if (!confirm('Permanently delete this product?')) return;
   try {
@@ -462,6 +485,7 @@ async function deleteProduct(id) {
     showToast('Product deleted ✅');
   } catch { showToast('Error deleting ❌'); }
 }
+
 function previewImg(url) {
   const wrap = document.getElementById('img-preview');
   const img = document.getElementById('preview-img');
