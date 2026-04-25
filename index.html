@@ -332,7 +332,7 @@
             <div style="text-align: end; font-size: 1.2rem; font-weight: 900; margin-bottom: 20px; border-top: 2px solid #eee; padding-top: 15px;">
                 <span data-en="Total:" data-ar="المجموع:">Total:</span> <span id="cart-total" style="color: var(--primary);">0</span> <span id="cart-currency" style="color: var(--primary); font-size: 1rem;">USD</span>
             </div>
-            <button class="btn-primary" onclick="window.location.href='checkout.html'" data-en="Proceed to Checkout" data-ar="إتمام عملية الدفع">Proceed to Checkout</button>
+            <button class="btn-primary" onclick="proceedToCheckout()" data-en="Proceed to Checkout" data-ar="إتمام عملية الدفع">Proceed to Checkout</button>
         </div>
     </div>
 
@@ -366,7 +366,6 @@
     <script>
         const API = 'https://syriacare-production.up.railway.app/api';
         
-        // 🟢 NEW: RATES variable is now dynamic
         let RATES = { USD: 1, SYP: 14500 }; 
         
         let products = []; 
@@ -629,7 +628,6 @@
             }
         }
 
-        // 🟢 NEW: Automatically fetches the live SP-Today exchange rate
         async function fetchLiveRate() {
             try {
                 const response = await fetch(`${API}/rate`);
@@ -754,6 +752,7 @@
             renderPaginationControls(totalPages);
             updateCartUI();
         }
+        
 
         function showProductDetails(productId) {
             const product = products.find(p => p._id === productId || p.id === productId);
@@ -957,6 +956,27 @@
             updateCartUI();
         }
 
+        // 🟢 NEW: Added the proceedToCheckout function here!
+        function proceedToCheckout() {
+            if (cart.length === 0) {
+                const toast = document.getElementById("toast");
+                if (toast) {
+                    toast.innerText = currentLang === 'ar' ? 'سلتك فارغة! ❌' : 'Your cart is empty! ❌';
+                    toast.style.backgroundColor = '#e74c3c'; // Make the error red
+                    toast.classList.add("show");
+                    
+                    setTimeout(() => { 
+                        toast.classList.remove("show"); 
+                        toast.style.backgroundColor = 'var(--secondary)'; // Reset color back to normal green
+                    }, 3000);
+                }
+                return; // Stop the code here so they don't go to checkout
+            }
+            
+            // If they have items, take them to the checkout page
+            window.location.href = 'checkout.html';
+        }
+
         function toggleModal(id) { 
             const m = document.getElementById(id); 
             if (m) m.style.display = m.style.display === 'flex' ? 'none' : 'flex'; 
@@ -1028,7 +1048,7 @@
 
         // Initialize Store Data
         fetchProductsFromCloud(); 
-        fetchLiveRate(); // 🟢 Trigger the API Call
+        fetchLiveRate(); 
         switchLanguage(currentLang);
     </script>
     <div id="toast">Added to Cart! ✅</div>
