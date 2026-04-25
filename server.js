@@ -1,7 +1,7 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
-const https = require('https'); // 🟢 ADDED: Required to fetch the live rate from sp-today
+const https = require('https'); 
 
 const app = express();
 app.use(cors()); 
@@ -53,12 +53,12 @@ const User = mongoose.model('User', userSchema);
 // API ROUTES
 // ==========================================
 
-// RAILWAY HEALTHCHECK: Tells Railway the server is alive immediately
+// RAILWAY HEALTHCHECK
 app.get('/', (req, res) => {
     res.status(200).send('SyriaCare Express API is live! 🚀');
 });
 
-// PING: Keeps the DB connection awake
+// PING
 app.get('/ping', async (req, res) => {
     try {
         await mongoose.connection.db.admin().ping();
@@ -68,12 +68,11 @@ app.get('/ping', async (req, res) => {
     }
 });
 
-// 🟢 NEW: LIVE SYRIAN POUND EXCHANGE RATE API
-let cachedSYPRate = 14500; // Safe default if the website is down
+// LIVE SYRIAN POUND EXCHANGE RATE API
+let cachedSYPRate = 14500; 
 let lastRateFetch = 0;
 
 app.get('/api/rate', (req, res) => {
-    // Cache the rate for 1 hour so SP-Today doesn't block your server IP
     if (Date.now() - lastRateFetch < 3600000) {
         return res.json({ rate: cachedSYPRate, source: 'cache' });
     }
@@ -88,7 +87,6 @@ app.get('/api/rate', (req, res) => {
         let data = '';
         response.on('data', chunk => data += chunk);
         response.on('end', () => {
-            // Read the HTML text to find "for buying and 14,850 SYP for selling"
             const match = data.match(/for buying and ([\d,]+) SYP for selling/i);
             if (match && match[1]) {
                 cachedSYPRate = parseInt(match[1].replace(/,/g, ''));
@@ -97,7 +95,6 @@ app.get('/api/rate', (req, res) => {
             res.json({ rate: cachedSYPRate, source: 'live' });
         });
     }).on('error', (err) => {
-        // If sp-today is down, return the last known rate safely
         res.json({ rate: cachedSYPRate, source: 'error-fallback' });
     });
 });
@@ -183,6 +180,16 @@ app.put('/api/orders/:id', async (req, res) => {
     }
 });
 
+// 🟢 NEW: DELETE ORDER ROUTE
+app.delete('/api/orders/:id', async (req, res) => {
+    try {
+        await Order.findByIdAndDelete(req.params.id);
+        res.json({ success: true });
+    } catch (error) { 
+        res.status(500).json({ error: "Failed to delete order" }); 
+    }
+});
+
 // --- USER ACCOUNTS ROUTES ---
 app.post('/api/users/register', async (req, res) => {
     try {
@@ -222,16 +229,12 @@ app.get('/api/users', async (req, res) => {
 // CONNECT AND START
 // ==========================================
 
-// 1. Define Port
 const PORT = process.env.PORT || 8080; 
 
-// 2. START LISTENING IMMEDIATELY 
-// This allows the server to pass the health check before the DB connects
 const server = app.listen(PORT, '0.0.0.0', () => {
     console.log(`🚀 SUCCESS: Server is listening on port ${PORT}`);
 });
 
-// 3. CONNECT TO DATABASE IN THE BACKGROUND
 mongoose.connect(MONGO_URI, {
     useNewUrlParser: true,
     useUnifiedTopology: true,
@@ -245,7 +248,6 @@ mongoose.connect(MONGO_URI, {
     console.error("🔴 DATABASE CONNECTION ERROR:", err.message);
 });
 
-// 4. Graceful Shutdown
 process.on('SIGTERM', () => {
     server.close(() => {
         mongoose.connection.close();
