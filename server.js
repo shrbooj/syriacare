@@ -1,6 +1,7 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
+const https = require('https'); // 🟢 ADDED: Required to fetch the live rate from sp-today
 
 const app = express();
 app.use(cors()); 
@@ -52,7 +53,7 @@ const User = mongoose.model('User', userSchema);
 // API ROUTES
 // ==========================================
 
-// 🟢 RAILWAY HEALTHCHECK: Tells Railway the server is alive immediately
+// RAILWAY HEALTHCHECK: Tells Railway the server is alive immediately
 app.get('/', (req, res) => {
     res.status(200).send('SyriaCare Express API is live! 🚀');
 });
@@ -65,6 +66,40 @@ app.get('/ping', async (req, res) => {
     } catch (error) { 
         res.status(500).send('Database connection error'); 
     }
+});
+
+// 🟢 NEW: LIVE SYRIAN POUND EXCHANGE RATE API
+let cachedSYPRate = 14500; // Safe default if the website is down
+let lastRateFetch = 0;
+
+app.get('/api/rate', (req, res) => {
+    // Cache the rate for 1 hour so SP-Today doesn't block your server IP
+    if (Date.now() - lastRateFetch < 3600000) {
+        return res.json({ rate: cachedSYPRate, source: 'cache' });
+    }
+
+    const options = {
+        hostname: 'sp-today.com',
+        path: '/en/currency/us-dollar',
+        headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' }
+    };
+
+    https.get(options, (response) => {
+        let data = '';
+        response.on('data', chunk => data += chunk);
+        response.on('end', () => {
+            // Read the HTML text to find "for buying and 14,850 SYP for selling"
+            const match = data.match(/for buying and ([\d,]+) SYP for selling/i);
+            if (match && match[1]) {
+                cachedSYPRate = parseInt(match[1].replace(/,/g, ''));
+                lastRateFetch = Date.now();
+            }
+            res.json({ rate: cachedSYPRate, source: 'live' });
+        });
+    }).on('error', (err) => {
+        // If sp-today is down, return the last known rate safely
+        res.json({ rate: cachedSYPRate, source: 'error-fallback' });
+    });
 });
 
 // --- PRODUCT ROUTES ---
