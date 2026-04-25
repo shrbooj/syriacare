@@ -121,14 +121,17 @@
 
     .form-group { margin-bottom: 15px; text-align: start; }
     .form-group label { display: block; margin-bottom: 6px; font-weight: 800; font-size: 0.85rem; color: #555;}
-    .form-group input { width: 100%; padding: 12px; border: 2px solid #eee; border-radius: 8px; box-sizing: border-box; font-family: inherit; transition: 0.2s; outline: none; background: #fafafa; font-weight: 600;}
-    .form-group input:focus { border-color: var(--primary); background: white;}
+    
+    /* 🟢 UPDATED: Included textarea styling so it matches the inputs */
+    .form-group input, .form-group textarea { width: 100%; padding: 12px; border: 2px solid #eee; border-radius: 8px; box-sizing: border-box; font-family: inherit; transition: 0.2s; outline: none; background: #fafafa; font-weight: 600;}
+    .form-group input:focus, .form-group textarea:focus { border-color: var(--primary); background: white;}
+    .form-group textarea { resize: vertical; min-height: 80px; }
 
     /* Loader CSS */
     .loader { border: 4px solid rgba(0,0,0,0.05); border-left-color: var(--primary); border-radius: 50%; width: 35px; height: 35px; animation: spin 1s linear infinite; margin: 0 auto; }
     @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     
-    /* ── MOBILE RESPONSIVE (MATCHING SCREENSHOT) ── */
+    /* ── MOBILE RESPONSIVE ── */
     @media (max-width: 600px) {
         header { flex-direction: column; padding: 15px 4%; gap: 12px; align-items: stretch; }
         .logo { justify-content: center; width: 100%; margin: 0; }
@@ -143,7 +146,6 @@
         #currency-toggle { height: 38px; }
         .btn-cart { grid-column: span 2; width: 100%; justify-content: center; border-radius: 20px; padding: 10px; font-size: 0.95rem; }
         
-        /* 🟢 THE FIX IS HERE: minmax(0, 1fr) prevents columns from resizing based on long text */
         .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; width: 100%; }
         
         .container { padding: 1rem 3%; }
@@ -268,9 +270,10 @@
                 <button class="close-btn" onclick="toggleModal('login-modal')">&times;</button>
             </div>
             <form onsubmit="handleLogin(event)">
+                <div id="login-error" style="color: #e74c3c; font-size: 0.85rem; font-weight: bold; margin-bottom: 10px; display: none; background: #fce4e4; padding: 10px; border-radius: 8px;"></div>
                 <div class="form-group">
                     <label data-en="Phone Number" data-ar="رقم الهاتف">Phone Number</label>
-                    <input type="tel" id="login-phone" required placeholder="+963...">
+                    <input type="tel" id="login-phone" required placeholder="Ex: 0933123456">
                 </div>
                 <div class="form-group">
                     <label data-en="Password" data-ar="كلمة المرور">Password</label>
@@ -286,12 +289,14 @@
     </div>
 
     <div id="register-modal" class="modal">
-        <div class="modal-content">
+        <div class="modal-content" style="max-height: 90vh; overflow-y: auto;">
             <div class="modal-header">
                 <h3 data-en="Create Account" data-ar="إنشاء حساب">Create Account</h3>
                 <button class="close-btn" onclick="toggleModal('register-modal')">&times;</button>
             </div>
             <form onsubmit="handleRegister(event)">
+                <div id="reg-error" style="color: #e74c3c; font-size: 0.85rem; font-weight: bold; margin-bottom: 15px; display: none; background: #fce4e4; padding: 10px; border-radius: 8px;"></div>
+                
                 <div style="display: flex; gap: 10px;">
                     <div class="form-group" style="flex: 1;">
                         <label data-en="Name" data-ar="الاسم">Name</label>
@@ -303,8 +308,12 @@
                     </div>
                 </div>
                 <div class="form-group">
-                    <label data-en="Phone Number" data-ar="رقم الهاتف">Phone Number</label>
-                    <input type="tel" id="reg-phone" required placeholder="+963...">
+                    <label data-en="Phone Number (9-10 digits)" data-ar="رقم الهاتف (9-10 أرقام)">Phone Number (9-10 digits)</label>
+                    <input type="tel" id="reg-phone" required placeholder="Ex: 0933123456">
+                </div>
+                <div class="form-group">
+                    <label data-en="Full Delivery Address" data-ar="عنوان التوصيل بالكامل">Full Delivery Address</label>
+                    <textarea id="reg-address" required placeholder="City, Neighborhood, Street, Building..."></textarea>
                 </div>
                 <div class="form-group">
                     <label data-en="Password" data-ar="كلمة المرور">Password</label>
@@ -360,6 +369,7 @@
         let cart = JSON.parse(localStorage.getItem('syriaCareCart')) || [];
         let activeCategory = 'All';
         
+        // 🟢 Loads users from local browser memory
         let currentUser = JSON.parse(localStorage.getItem('syriaCareUser')) || null;
         let mockDatabase = JSON.parse(localStorage.getItem('syriaCareDB')) || [];
 
@@ -475,38 +485,83 @@
             }
         }
 
+        // 🟢 UPDATED: Registration with Strict Validation
         function handleRegister(e) {
             e.preventDefault();
+            const errorDiv = document.getElementById('reg-error');
+            errorDiv.style.display = 'none';
+
             try {
-                const nameField = document.getElementById('reg-name');
-                const surnameField = document.getElementById('reg-surname');
-                const phoneField = document.getElementById('reg-phone');
-                const passField = document.getElementById('reg-password');
+                const name = document.getElementById('reg-name').value.trim();
+                const surname = document.getElementById('reg-surname').value.trim();
+                const phone = document.getElementById('reg-phone').value.trim();
+                const address = document.getElementById('reg-address').value.trim();
+                const password = document.getElementById('reg-password').value;
 
-                const user = {
-                    name: nameField ? nameField.value : "Guest",
-                    surname: surnameField ? surnameField.value : "",
-                    phone: phoneField ? phoneField.value : "",
-                    password: passField ? passField.value : "",
-                    location: "Not Provided"
-                };
+                // 1. Phone Validation: Only numbers, exactly 9 or 10 digits
+                const phoneRegex = /^\d{9,10}$/;
+                if (!phoneRegex.test(phone)) {
+                    errorDiv.innerText = currentLang === 'ar' 
+                        ? '❌ يجب أن يتكون رقم الهاتف من 9 أو 10 أرقام فقط (لا يُسمح بأحرف أو رموز).' 
+                        : '❌ Phone number must be exactly 9 or 10 digits (numbers only).';
+                    errorDiv.style.display = 'block';
+                    return;
+                }
 
+                // 2. Address Validation: Must be detailed enough
+                if (address.length < 10) {
+                    errorDiv.innerText = currentLang === 'ar' 
+                        ? '❌ يرجى كتابة عنوان التوصيل بالكامل (المدينة، الحي، الشارع، البناء).' 
+                        : '❌ Please provide your full delivery address (City, Neighborhood, Street, Building).';
+                    errorDiv.style.display = 'block';
+                    return;
+                }
+
+                // 3. Create User and Save locally
+                const user = { name, surname, phone, password, address };
                 mockDatabase.push(user);
+                
+                // Save database to browser memory
                 localStorage.setItem('syriaCareDB', JSON.stringify(mockDatabase));
+                
                 loginUser(user);
                 toggleModal('register-modal');
-                alert(currentLang === 'ar' ? 'تم إنشاء الحساب بنجاح!' : 'Account Created Successfully!');
+                e.target.reset(); // clear form
+                
+                const toast = document.getElementById("toast");
+                if (toast) {
+                    toast.innerText = currentLang === 'ar' ? 'تم إنشاء الحساب بنجاح! 🎉' : 'Account Created Successfully! 🎉';
+                    toast.classList.add("show");
+                    setTimeout(() => { toast.classList.remove("show"); }, 3000);
+                }
+
             } catch (error) {
                 console.error("Registration Error:", error);
             }
         }
 
+        // 🟢 UPDATED: Login Error Handling
         function handleLogin(e) {
             e.preventDefault();
-            const phone = document.getElementById('login-phone').value;
+            const errorDiv = document.getElementById('login-error');
+            errorDiv.style.display = 'none';
+
+            const phone = document.getElementById('login-phone').value.trim();
             const pass = document.getElementById('login-password').value;
+            
+            // Check if user exists in the local database
             const user = mockDatabase.find(u => u.phone === phone && u.password === pass);
-            if (user) { loginUser(user); toggleModal('login-modal'); } else { alert(currentLang === 'ar' ? 'بيانات الدخول خاطئة' : 'Invalid login'); }
+            
+            if (user) { 
+                loginUser(user); 
+                toggleModal('login-modal'); 
+                e.target.reset();
+            } else { 
+                errorDiv.innerText = currentLang === 'ar' 
+                    ? '❌ رقم الهاتف أو كلمة المرور غير صحيحة.' 
+                    : '❌ Invalid phone number or password.';
+                errorDiv.style.display = 'block';
+            }
         }
 
         function loginUser(user) { currentUser = user; localStorage.setItem('syriaCareUser', JSON.stringify(user)); updateAuthUI(); }
