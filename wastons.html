@@ -39,7 +39,7 @@
     .btn-cart:hover { filter: brightness(1.1); transform: translateY(-1px); box-shadow: 0 4px 10px rgba(0,150,136,0.3); }
 
     .btn-primary { background: linear-gradient(135deg, var(--primary), #7c43bd); color: white; border: none; width: 100%; padding: 12px; font-weight: 800; margin-top: 10px; border-radius: 8px; box-shadow: 0 4px 15px rgba(74, 20, 140, 0.25); transition: all 0.3s ease; font-size: 1.05rem; cursor: pointer;}
-    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(74, 20, 140, 0.4); }
+    .btn-primary:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(74, 20, 140, 0.4); }
     
     .btn-outline { background: transparent; color: var(--primary); border: 2px solid var(--primary); width: 100%; padding: 10px; font-weight: 800; border-radius: 8px; transition: all 0.3s ease; margin-top: 10px; cursor: pointer;}
     .btn-outline:hover { background: rgba(74, 20, 140, 0.05); transform: translateY(-1px); }
@@ -67,7 +67,7 @@
     .container { padding: 2rem 5%; }
     .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 15px; margin-top: 20px; width: 100%; box-sizing: border-box; }
     
-    .card { background: white; border-radius: 14px; padding: 18px; box-shadow: 0 2px 10px rgba(0,0,0,0.04); text-align: center; display: flex; flex-direction: column; justify-content: space-between; border: 1px solid #f0f0f0; transition: 0.3s; width: 100%; box-sizing: border-box; min-width: 0;}
+    .card { position: relative; background: white; border-radius: 14px; padding: 18px; box-shadow: 0 2px 10px rgba(0,0,0,0.04); text-align: center; display: flex; flex-direction: column; justify-content: space-between; border: 1px solid #f0f0f0; transition: 0.3s; width: 100%; box-sizing: border-box; min-width: 0;}
     .card:hover { transform: translateY(-4px); box-shadow: 0 8px 20px rgba(74,20,140,0.08); border-color: #eaddf4; }
     
     .card h3 { font-size: 0.95rem; font-weight: 800; height: 42px; overflow: hidden; margin: 10px 0; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; color: #222; word-break: break-word;}
@@ -81,7 +81,7 @@
     .price-box { display: flex; border-radius: 8px; overflow: hidden; height: 42px; width: 100%; }
     .price-amount { flex: 1; display: flex; align-items: center; justify-content: center; background: #f4edf9; color: var(--primary); font-weight: 900; font-size: 1.05rem; }
     .price-add-btn { background: var(--primary); color: white; border: none; width: 48px; font-size: 1.4rem; font-weight: bold; cursor: pointer; display: flex; justify-content: center; align-items: center; transition: 0.2s; flex-shrink: 0; }
-    .price-add-btn:hover { filter: brightness(1.15); }
+    .price-add-btn:hover:not(:disabled) { filter: brightness(1.15); }
 
     /* ── PAGINATION ── */
     .pagination { display: flex; justify-content: center; align-items: center; gap: 6px; margin-top: 40px; flex-wrap: wrap; }
@@ -111,7 +111,7 @@
     @keyframes fadeout { from {bottom: 30px; opacity: 1;} to {bottom: 0; opacity: 0;} }
 
     .modal { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 2000; justify-content: center; align-items: center; backdrop-filter: blur(3px); }
-    .modal-content { background: white; padding: 30px; border-radius: 16px; width: 90%; max-width: 420px; box-shadow: 0 20px 40px rgba(0,0,0,0.15); animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+    .modal-content { position: relative; background: white; padding: 30px; border-radius: 16px; width: 90%; max-width: 420px; box-shadow: 0 20px 40px rgba(0,0,0,0.15); animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
     @keyframes popIn { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
     
     .modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #f1f1f1; padding-bottom: 12px; margin-bottom: 20px; }
@@ -126,11 +126,9 @@
     .form-group input:focus, .form-group textarea:focus { border-color: var(--primary); background: white;}
     .form-group textarea { resize: vertical; min-height: 80px; }
 
-    /* Loader CSS */
     .loader { border: 4px solid rgba(0,0,0,0.05); border-left-color: var(--primary); border-radius: 50%; width: 35px; height: 35px; animation: spin 1s linear infinite; margin: 0 auto; }
     @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     
-    /* ── MOBILE RESPONSIVE ── */
     @media (max-width: 600px) {
         header { flex-direction: column; padding: 15px 4%; gap: 12px; align-items: stretch; }
         .logo { justify-content: center; width: 100%; margin: 0; }
@@ -351,6 +349,11 @@
 
     <div id="product-modal" class="modal">
         <div class="modal-content" style="max-height: 90vh; overflow-y: auto;">
+            
+            <div id="modal-out-of-stock-badge" style="display: none; position: absolute; top: -15px; left: 50%; transform: translateX(-50%); background: #e74c3c; color: white; padding: 6px 16px; border-radius: 20px; font-weight: 900; font-size: 0.9rem; z-index: 10; box-shadow: 0 4px 10px rgba(231,76,60,0.4);">
+                Out of Stock
+            </div>
+
             <div class="modal-header">
                 <h3 data-en="Product Details" data-ar="تفاصيل المنتج">Product Details</h3>
                 <button class="close-btn" onclick="toggleModal('product-modal')">&times;</button>
@@ -368,7 +371,6 @@
         let cart = JSON.parse(localStorage.getItem('syriaCareCart')) || [];
         let activeCategory = 'All';
         
-        // Load active session from browser memory
         let currentUser = JSON.parse(localStorage.getItem('syriaCareUser')) || null;
 
         let currentPage = 1;
@@ -483,7 +485,6 @@
             }
         }
 
-        // 🟢 LIVE REGISTRATION: Sends data to your MongoDB Server
         async function handleRegister(e) {
             e.preventDefault();
             const errorDiv = document.getElementById('reg-error');
@@ -497,32 +498,26 @@
                 const address = document.getElementById('reg-address').value.trim();
                 const password = document.getElementById('reg-password').value;
 
-                // 1. Phone Validation
                 const phoneRegex = /^\d{9,10}$/;
                 if (!phoneRegex.test(phone)) {
                     errorDiv.innerText = currentLang === 'ar' 
                         ? '❌ يجب أن يتكون رقم الهاتف من 9 أو 10 أرقام فقط (بدون أحرف).' 
                         : '❌ Phone number must be exactly 9 or 10 digits (numbers only).';
-                    errorDiv.style.display = 'block';
-                    return;
+                    errorDiv.style.display = 'block'; return;
                 }
 
-                // 2. Address Validation
                 if (address.length < 10) {
                     errorDiv.innerText = currentLang === 'ar' 
                         ? '❌ يرجى كتابة عنوان التوصيل بالكامل (المدينة، الحي، الشارع، البناء).' 
                         : '❌ Please provide your full delivery address.';
-                    errorDiv.style.display = 'block';
-                    return;
+                    errorDiv.style.display = 'block'; return;
                 }
 
                 submitBtn.disabled = true;
                 submitBtn.innerText = currentLang === 'ar' ? 'جاري التحميل...' : 'Loading...';
 
-                // Send to Server
                 const response = await fetch(`${API}/users/register`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ name, surname, phone, address, password })
                 });
 
@@ -538,7 +533,7 @@
 
                 loginUser(data.user);
                 toggleModal('register-modal');
-                e.target.reset(); // clear form
+                e.target.reset(); 
                 
                 const toast = document.getElementById("toast");
                 if (toast) {
@@ -548,7 +543,6 @@
                 }
 
             } catch (error) {
-                console.error("Registration Error:", error);
                 errorDiv.innerText = '❌ Network error. Please try again.';
                 errorDiv.style.display = 'block';
             } finally {
@@ -557,13 +551,11 @@
             }
         }
 
-        // 🟢 LIVE LOGIN: Verifies against your MongoDB Server
         async function handleLogin(e) {
             e.preventDefault();
             const errorDiv = document.getElementById('login-error');
             errorDiv.style.display = 'none';
             const submitBtn = e.target.querySelector('button[type="submit"]');
-
             const phone = document.getElementById('login-phone').value.trim();
             const password = document.getElementById('login-password').value;
 
@@ -571,19 +563,15 @@
             submitBtn.innerText = currentLang === 'ar' ? 'جاري التحميل...' : 'Loading...';
 
             try {
-                // Send credentials to Server
                 const response = await fetch(`${API}/users/login`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ phone, password })
                 });
 
                 const data = await response.json();
 
                 if (!response.ok) {
-                    errorDiv.innerText = currentLang === 'ar' 
-                        ? '❌ رقم الهاتف أو كلمة المرور غير صحيحة.' 
-                        : '❌ Invalid phone number or password.';
+                    errorDiv.innerText = currentLang === 'ar' ? '❌ رقم الهاتف أو كلمة المرور غير صحيحة.' : '❌ Invalid phone number or password.';
                     errorDiv.style.display = 'block';
                     submitBtn.disabled = false;
                     submitBtn.innerText = currentLang === 'ar' ? 'تسجيل الدخول' : 'Sign In';
@@ -628,7 +616,6 @@
                 renderProducts(); 
             } catch (error) {
                 isLoadingProducts = false;
-                console.error("🔴 Database Error:", error);
                 if (grid) {
                     grid.innerHTML = `
                         <div style="grid-column: 1 / -1; text-align: center; padding: 40px;">
@@ -677,7 +664,9 @@
             const symbol = currency === 'USD' ? '$' : 'ل.س';
             grid.innerHTML = ''; 
 
-            let displayed = products.filter(p => p.inStock !== false);
+            // 🟢 REMOVED: We no longer hide Out of Stock items, we just show them dynamically
+            let displayed = products;
+
             if (activeCategory !== 'All') displayed = displayed.filter(p => p.category === activeCategory);
             
             const searchInput = document.getElementById('search-input');
@@ -708,12 +697,25 @@
                 const productId = p._id || p.id;
                 
                 const displayName = (currentLang === 'ar' && p.cachedNameAr) ? p.cachedNameAr : p.name;
+                
+                // 🟢 NEW: Out of Stock Visuals
+                const isOutOfStock = p.inStock === false;
+                const stockBadgeHtml = isOutOfStock 
+                    ? `<div style="position: absolute; top: 12px; right: 12px; background: rgba(231,76,60,0.9); color: white; padding: 4px 12px; border-radius: 8px; font-weight: 900; font-size: 0.8rem; z-index: 10;">${currentLang === 'ar' ? 'نفذت الكمية' : 'Out of Stock'}</div>` 
+                    : '';
+                const imgOpacity = isOutOfStock ? 'opacity: 0.5; filter: grayscale(100%);' : '';
+                
+                // 🟢 NEW: Disabling Add to Cart if Out of Stock
+                const addBtnHtml = isOutOfStock
+                    ? `<button class="price-add-btn" style="background: #ccc; cursor: not-allowed;" disabled>+</button>`
+                    : `<button class="price-add-btn" onclick="addToCart('${productId}')">+</button>`;
 
                 grid.innerHTML += `
                     <div class="card">
+                        ${stockBadgeHtml}
                         <div onclick="showProductDetails('${productId}')" style="cursor: pointer;">
                             <img src="${storeLogo}" style="height: 65px; object-fit: contain; margin: 0 auto 15px auto; display: block;" onerror="this.style.display='none'">
-                            <img src="${p.image}" style="width: 100%; height: 150px; object-fit: contain; margin-bottom: 10px; border-radius: 8px;">
+                            <img src="${p.image}" style="width: 100%; height: 150px; object-fit: contain; margin-bottom: 10px; border-radius: 8px; ${imgOpacity}">
                             <h3 id="grid-name-${productId}">${displayName}</h3>
                         </div>
                         <button class="btn-details" onclick="showProductDetails('${productId}')">
@@ -724,7 +726,7 @@
                             <p class="original-price"><span>${countryText}: ${p.originalTRY} TRY</span></p>
                             <div class="price-box">
                                 <div class="price-amount">${symbol} ${converted}</div>
-                                <button class="price-add-btn" onclick="addToCart('${productId}')">+</button>
+                                ${addBtnHtml}
                             </div>
                         </div>
                     </div>
@@ -754,17 +756,30 @@
             
             const displayName = (currentLang === 'ar' && product.cachedNameAr) ? product.cachedNameAr : product.name;
 
+            // 🟢 NEW: Apply Out of Stock Logic to Modal
+            const isOutOfStock = product.inStock === false;
+            const badgeEl = document.getElementById('modal-out-of-stock-badge');
+            if (isOutOfStock) {
+                badgeEl.innerText = currentLang === 'ar' ? 'نفذت الكمية' : 'Out of Stock';
+                badgeEl.style.display = 'block';
+            } else {
+                badgeEl.style.display = 'none';
+            }
+
+            const imgOpacity = isOutOfStock ? 'opacity: 0.6; filter: grayscale(100%);' : '';
+            const mainActionBtn = isOutOfStock
+                ? `<button class="btn-primary" style="padding: 14px; font-size: 1.1rem; background: #ccc; cursor: not-allowed; box-shadow: none;" disabled>${currentLang === 'ar' ? 'نفذت الكمية' : 'Out of Stock'}</button>`
+                : `<button class="btn-primary" style="padding: 14px; font-size: 1.1rem;" onclick="addToCart('${product._id || product.id}'); toggleModal('product-modal');">${currentLang === 'ar' ? 'أضف إلى السلة 🛒' : 'Add to Cart 🛒'}</button>`;
+
             body.innerHTML = `
-                <img src="${product.image}" class="product-detail-img" onerror="this.src='placeholder.png'">
+                <img src="${product.image}" class="product-detail-img" style="${imgOpacity}" onerror="this.src='placeholder.png'">
                 <h2 id="modal-name-${product._id || product.id}" class="product-detail-name">${displayName}</h2>
                 <p class="product-detail-price" style="margin-bottom: 10px;">${symbol} ${converted}</p>
                 <button class="btn-outline" style="margin-bottom: 15px; padding: 10px; font-size: 0.95rem; border-width: 1.5px; border-radius: 10px;" onclick="toggleModalDesc('${product._id || product.id}', this)">
                     <span style="opacity:0.6;">📖</span> ${btnDescText}
                 </button>
                 <div id="modal-desc-box" class="product-inline-desc" style="display: none; margin-bottom: 20px;" dir="${currentLang === 'ar' ? 'rtl' : 'ltr'}"></div>
-                <button class="btn-primary" style="padding: 14px; font-size: 1.1rem;" onclick="addToCart('${product._id || product.id}'); toggleModal('product-modal');">
-                    ${currentLang === 'ar' ? 'أضف إلى السلة 🛒' : 'Add to Cart 🛒'}
-                </button>
+                ${mainActionBtn}
             `;
             toggleModal('product-modal');
             
