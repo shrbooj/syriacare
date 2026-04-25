@@ -220,15 +220,15 @@
         <h2 data-en="Shop by Category" data-ar="تسوق حسب الفئة" style="font-weight: 900; color: #222;">Shop by Category</h2>
         <div class="category-grid-visual">
             <div class="cat-card" onclick="filterCategory('Makeup')">
-                <img src="https://t3.ftcdn.net/jpg/07/88/49/16/360_F_788491606_q3r7AZd0B0IJieoq5olDRBr8cQ2YuYd0.jpg" alt="Makeup">
+                <img src="https://images.unsplash.com/photo-1596462502278-27bfdc403348?w=500" alt="Makeup">
                 <div class="cat-title" data-en="Makeup" data-ar="مكياج">Makeup</div>
             </div>
             <div class="cat-card" onclick="filterCategory('Skin Care')">
-                <img src="https://cdn.shopify.com/s/files/1/0410/9608/5665/t/3/assets/pf-e83f0bc1--Blog-Creative-57.jpg?v=1605019254" alt="Skin Care">
+                <img src="https://images.unsplash.com/photo-1620916566398-39f1143ab7be?w=500" alt="Skin Care">
                 <div class="cat-title" data-en="Skin Care" data-ar="العناية بالبشرة">Skin Care</div>
             </div>
             <div class="cat-card" onclick="filterCategory('Hair Care')">
-                <img src="https://drhanandermatologyclinic.com/wp-content/uploads/2025/01/woman-doing-herself-scalp-massage-1024x683.jpg" alt="Hair Care">
+                <img src="https://images.unsplash.com/photo-1526947425960-945c6e72858f?w=500" alt="Hair Care">
                 <div class="cat-title" data-en="Hair Care" data-ar="العناية بالشعر">Hair Care</div>
             </div>
             <div class="cat-card" onclick="filterCategory('Perfume & Deodorant')">
@@ -248,7 +248,7 @@
                 <div class="cat-title" data-en="Solar Care" data-ar="العناية من الشمس">Solar Care</div>
             </div>
             <div class="cat-card" onclick="filterCategory('Mother & Baby')">
-                <img src="https://static.vecteezy.com/system/resources/thumbnails/078/660/007/small/happy-mother-lifting-smiling-baby-in-white-clothing-photo.jpeg" alt="Baby">
+                <img src="https://images.unsplash.com/photo-1555252333-9f8e92e65df9?w=500" alt="Baby">
                 <div class="cat-title" data-en="Mother & Baby" data-ar="الأم والطفل">Mother & Baby</div>
             </div>
         </div>
@@ -365,18 +365,17 @@
 
     <script>
         const API = 'https://syriacare-production.up.railway.app/api';
-        const RATES = { USD: 1, SYP: 14500 };
+        
+        // 🟢 NEW: RATES variable is now dynamic
+        let RATES = { USD: 1, SYP: 14500 }; 
         
         let products = []; 
         let cart = JSON.parse(localStorage.getItem('syriaCareCart')) || [];
         let activeCategory = 'All';
-        
         let currentUser = JSON.parse(localStorage.getItem('syriaCareUser')) || null;
-
         let currentPage = 1;
         const PRODUCTS_PER_PAGE = 24;
         let currentLang = localStorage.getItem('syriaCareLang') || 'en';
-        
         let isLoadingProducts = true; 
         
         const arabicCats = {
@@ -630,6 +629,22 @@
             }
         }
 
+        // 🟢 NEW: Automatically fetches the live SP-Today exchange rate
+        async function fetchLiveRate() {
+            try {
+                const response = await fetch(`${API}/rate`);
+                const data = await response.json();
+                if (data.rate) {
+                    RATES.SYP = data.rate;
+                    console.log(`🟢 Live SYP Rate Loaded: 1 USD = ${data.rate} SYP`);
+                    renderProducts(); 
+                    updateCartUI();   
+                }
+            } catch (error) {
+                console.error("Could not fetch live rate. Using default 14,500.");
+            }
+        }
+
         function handleSearch() {
             currentPage = 1;
             renderProducts();
@@ -664,7 +679,6 @@
             const symbol = currency === 'USD' ? '$' : 'ل.س';
             grid.innerHTML = ''; 
 
-            // 🟢 REMOVED: We no longer hide Out of Stock items, we just show them dynamically
             let displayed = products;
 
             if (activeCategory !== 'All') displayed = displayed.filter(p => p.category === activeCategory);
@@ -698,14 +712,12 @@
                 
                 const displayName = (currentLang === 'ar' && p.cachedNameAr) ? p.cachedNameAr : p.name;
                 
-                // 🟢 NEW: Out of Stock Visuals
                 const isOutOfStock = p.inStock === false;
                 const stockBadgeHtml = isOutOfStock 
                     ? `<div style="position: absolute; top: 12px; right: 12px; background: rgba(231,76,60,0.9); color: white; padding: 4px 12px; border-radius: 8px; font-weight: 900; font-size: 0.8rem; z-index: 10;">${currentLang === 'ar' ? 'نفذت الكمية' : 'Out of Stock'}</div>` 
                     : '';
                 const imgOpacity = isOutOfStock ? 'opacity: 0.5; filter: grayscale(100%);' : '';
                 
-                // 🟢 NEW: Disabling Add to Cart if Out of Stock
                 const addBtnHtml = isOutOfStock
                     ? `<button class="price-add-btn" style="background: #ccc; cursor: not-allowed;" disabled>+</button>`
                     : `<button class="price-add-btn" onclick="addToCart('${productId}')">+</button>`;
@@ -756,7 +768,6 @@
             
             const displayName = (currentLang === 'ar' && product.cachedNameAr) ? product.cachedNameAr : product.name;
 
-            // 🟢 NEW: Apply Out of Stock Logic to Modal
             const isOutOfStock = product.inStock === false;
             const badgeEl = document.getElementById('modal-out-of-stock-badge');
             if (isOutOfStock) {
@@ -1015,7 +1026,9 @@
             }
         }
 
+        // Initialize Store Data
         fetchProductsFromCloud(); 
+        fetchLiveRate(); // 🟢 Trigger the API Call
         switchLanguage(currentLang);
     </script>
     <div id="toast">Added to Cart! ✅</div>
