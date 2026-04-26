@@ -12,6 +12,7 @@ app.use(express.json({ limit: '10mb' }));
 
 const MONGO_URI = "mongodb+srv://karimlaham232_db_user:karim.1234@cluster0.rcrmtnz.mongodb.net/syriacare?retryWrites=true&w=majority";
 
+// Configure the Nodemailer bot using your secret .env variables
 const transporter = nodemailer.createTransport({
     service: 'gmail',
     auth: {
@@ -44,8 +45,8 @@ const orderSchema = new mongoose.Schema({
     location: String,
     items: Array,
     total: Number,
-    promoCode: String,          // 🟢 NEW: Saves the code (e.g., "SYRIA10")
-    discountPercentage: Number, // 🟢 NEW: Saves the amount (e.g., 10)
+    promoCode: String,          // 🟢 Saves the promo code (e.g., "SYRIA10")
+    discountPercentage: Number, // 🟢 Saves the discount amount (e.g., 10)
     status: { type: String, default: 'Pending' }, 
     date: { type: Date, default: Date.now }
 });
@@ -64,7 +65,6 @@ const userSchema = new mongoose.Schema({
 });
 const User = mongoose.model('User', userSchema);
 
-// 🟢 NEW: Promo Code Schema
 const promoSchema = new mongoose.Schema({
     code: { type: String, required: true, unique: true, uppercase: true },
     discountPercentage: { type: Number, required: true }, 
@@ -217,6 +217,7 @@ app.get('/api/users', async (req, res) => {
     catch (err) { res.status(500).json({ error: "Failed to fetch users." }); }
 });
 
+// --- FORGOT PASSWORD ROUTES ---
 app.post('/api/users/forgot-password', async (req, res) => {
     try {
         const user = await User.findOne({ email: req.body.email });
@@ -261,7 +262,9 @@ app.post('/api/users/reset-password', async (req, res) => {
     } catch (err) { res.status(500).json({ error: "Failed to reset password." }); }
 });
 
-// 🟢 NEW: PROMO CODE ROUTE
+// --- PROMO CODE ROUTES ---
+
+// 1. Apply Promo Code (Frontend Cart)
 app.post('/api/promo/apply', async (req, res) => {
     try {
         const { code } = req.body;
@@ -278,6 +281,41 @@ app.post('/api/promo/apply', async (req, res) => {
         res.json({ success: true, discountPercentage: promo.discountPercentage, code: promo.code });
     } catch (err) {
         res.status(500).json({ error: "Failed to validate promo code." });
+    }
+});
+
+// 2. Get All Promo Codes (Admin Panel)
+app.get('/api/promo', async (req, res) => {
+    try {
+        const promos = await Promo.find().sort({ _id: -1 });
+        res.json(promos);
+    } catch (err) { 
+        res.status(500).json({ error: "Failed to fetch promo codes." }); 
+    }
+});
+
+// 3. Create Promo Code (Admin Panel)
+app.post('/api/promo', async (req, res) => {
+    try {
+        const { code, discountPercentage } = req.body;
+        const newPromo = new Promo({ 
+            code: code.toUpperCase().trim(), 
+            discountPercentage 
+        });
+        await newPromo.save();
+        res.json({ success: true, promo: newPromo });
+    } catch (err) { 
+        res.status(400).json({ error: "Failed to create. Code might already exist." }); 
+    }
+});
+
+// 4. Delete Promo Code (Admin Panel)
+app.delete('/api/promo/:id', async (req, res) => {
+    try {
+        await Promo.findByIdAndDelete(req.params.id);
+        res.json({ success: true });
+    } catch (err) { 
+        res.status(500).json({ error: "Failed to delete promo code." }); 
     }
 });
 
@@ -300,7 +338,6 @@ mongoose.connect(MONGO_URI, {
 .then(async () => {
     console.log("🟢 SUCCESS: Connected to MongoDB Atlas!");
     
-    // 🟢 NEW: Create a test promo code automatically when the server starts
     try {
         const existing = await Promo.findOne({ code: 'SYRIA10' });
         if (!existing) {
