@@ -385,8 +385,8 @@
         let currentLang = localStorage.getItem('syriaCareLang') || 'en';
         let isLoadingProducts = true; 
         
-        // 🟢 NEW: Active Promo Variable
-        let activePromo = null;
+        // 🟢 ACTIVE PROMO VARIABLE (Reads from memory)
+        let activePromo = JSON.parse(localStorage.getItem('syriaCarePromo')) || null;
         
         const arabicCats = {
             'Makeup': 'مكياج', 'Skin Care': 'العناية بالبشرة', 'Hair Care': 'العناية بالشعر',
@@ -889,7 +889,7 @@
             }
         }
         
-        // 🟢 NEW: Apply Promo Code Function
+        // 🟢 MODIFIED: Apply Promo Code Function (Saves to Memory)
         async function applyPromoCode() {
             const input = document.getElementById('promo-input');
             const messageEl = document.getElementById('promo-message');
@@ -914,12 +914,14 @@
                     messageEl.style.color = '#e74c3c';
                     messageEl.innerText = `❌ ${data.error}`;
                     activePromo = null; 
+                    localStorage.removeItem('syriaCarePromo'); // 🟢 Clears invalid code from memory
                 } else {
                     messageEl.style.color = 'var(--secondary)';
                     messageEl.innerText = currentLang === 'ar' 
                         ? `✅ تم تطبيق خصم ${data.discountPercentage}%!` 
                         : `✅ ${data.discountPercentage}% Discount Applied!`;
                     activePromo = data; 
+                    localStorage.setItem('syriaCarePromo', JSON.stringify(data)); // 🟢 Saves valid code to memory
                 }
                 
                 updateCartUI(); 
@@ -989,7 +991,7 @@
                 }
             }
             
-            // 🟢 NEW: Apply discount logic to the final total
+            // 🟢 Apply discount logic to the final total
             let finalTotal = grandTotal;
             const originalTotalEl = document.getElementById('original-total-display');
             
