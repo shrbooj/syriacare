@@ -315,6 +315,7 @@
                 
                 <div class="form-group" style="background: #f4edf9; padding: 15px; border-radius: 8px; border: 1px solid #eaddf4; margin-bottom: 15px;">
                     <label data-en="Security Question" data-ar="سؤال الأمان" style="color: var(--secondary);">Security Question</label>
+                    
                     <p id="display-security-question" style="font-weight: 900; font-size: 1.05rem; margin-top: 5px; margin-bottom: 0; color: var(--primary);"></p>
                 </div>
                 
@@ -373,7 +374,7 @@
                     <select id="reg-question" required>
                         <option value="What is your mother's maiden name?" data-en="What is your mother's maiden name?" data-ar="ما هو اسم عائلة والدتك قبل الزواج؟">What is your mother's maiden name?</option>
                         <option value="What was the name of your first pet?" data-en="What was the name of your first pet?" data-ar="ما هو اسم حيوانك الأليف الأول؟">What was the name of your first pet?</option>
-                        <option value="What city were you born in?" data-en="when is your birthday?" data-ar="تاريخ ميلادك؟">What city were you born in?</option>
+                        <option value="What city were you born in?" data-en="What city were you born in?" data-ar="في أي مدينة ولدت؟">What city were you born in?</option>
                     </select>
                 </div>
                 <div class="form-group">
@@ -519,13 +520,18 @@
             if (menu) menu.style.display = 'none';
             
             document.querySelectorAll('[data-en]').forEach(el => {
-                // For select options, keep the value intact but change the displayed text
                 if(el.tagName.toLowerCase() === 'option') {
                     el.innerText = el.getAttribute(`data-${lang}`);
                 } else {
                     el.innerText = el.getAttribute(`data-${lang}`);
                 }
             });
+
+            // 🟢 Update the dynamic security question if it's currently displayed!
+            const qEl = document.getElementById('display-security-question');
+            if (qEl && qEl.hasAttribute('data-en')) {
+                qEl.innerText = qEl.getAttribute(`data-${lang}`);
+            }
             
             const searchInput = document.getElementById('search-input');
             if (searchInput) searchInput.placeholder = searchInput.getAttribute(`data-placeholder-${lang}`);
@@ -562,7 +568,6 @@
             }
         }
 
-        // 🟢 NEW: Registration handles Security Questions
         async function handleRegister(e) {
             e.preventDefault();
             const errorDiv = document.getElementById('reg-error');
@@ -589,7 +594,6 @@
                 submitBtn.disabled = true;
                 submitBtn.innerText = currentLang === 'ar' ? 'جاري التحميل...' : 'Loading...';
 
-                // Send the new fields to the backend
                 const response = await fetch(`${API}/users/register`, {
                     method: 'POST', headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ name, surname, phone, address, password, securityQuestion: question, securityAnswer: answer })
@@ -664,7 +668,6 @@
             }
         }
 
-        // 🟢 NEW: Handles Step 1 of Password Reset (Asking for phone)
         async function handleForgotPassword(e) {
             e.preventDefault();
             const errorDiv = document.getElementById('forgot-error-1');
@@ -686,8 +689,24 @@
                     errorDiv.innerText = `❌ ${data.error || 'Failed to find account.'}`;
                     errorDiv.style.display = 'block';
                 } else {
-                    // Show the security question to the user
-                    document.getElementById('display-security-question').innerText = data.question;
+                    // 🟢 NEW: Store and translate the dynamic database question perfectly!
+                    const qEl = document.getElementById('display-security-question');
+                    
+                    // Always save the English version as data-en
+                    qEl.setAttribute('data-en', data.question);
+                    
+                    // Create the Arabic version manually
+                    let arQ = data.question;
+                    if (data.question === "What is your mother's maiden name?") arQ = "ما هو اسم عائلة والدتك قبل الزواج؟";
+                    else if (data.question === "What was the name of your first pet?") arQ = "ما هو اسم حيوانك الأليف الأول؟";
+                    else if (data.question === "What city were you born in?") arQ = "في أي مدينة ولدت؟";
+                    
+                    // Save the Arabic version as data-ar
+                    qEl.setAttribute('data-ar', arQ);
+                    
+                    // Display the right language right now
+                    qEl.innerText = currentLang === 'ar' ? arQ : data.question;
+
                     document.getElementById('forgot-step-1').style.display = 'none';
                     document.getElementById('forgot-step-2').style.display = 'block';
                 }
@@ -700,7 +719,6 @@
             }
         }
 
-        // 🟢 NEW: Handles Step 2 of Password Reset (Validating answer & changing password)
         async function handleResetPassword(e) {
             e.preventDefault();
             const errorDiv = document.getElementById('forgot-error-2');
@@ -732,7 +750,6 @@
                         toast.classList.add("show");
                         setTimeout(() => { toast.classList.remove("show"); }, 3000);
                     }
-                    // Reset forms
                     document.getElementById('forgot-step-1').style.display = 'block';
                     document.getElementById('forgot-step-2').style.display = 'none';
                     document.getElementById('forgot-step-1').reset();
