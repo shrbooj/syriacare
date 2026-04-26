@@ -53,13 +53,13 @@ header { background: #fff; padding: 0 5%; height: 64px; display: flex; align-ite
 .si-name { font-size: .88rem; font-weight: 700; flex: 1; line-height: 1.3; }
 .si-qty { font-size: .78rem; color: #888; }
 .si-price { font-weight: 900; font-size: .9rem; color: var(--primary); }
-.total-line { display: flex; justify-content: space-between; padding: 14px 0 0; font-weight: 900; font-size: 1.05rem; }
-.total-line span:last-child { color: var(--primary); }
+.total-line { display: flex; justify-content: space-between; align-items: flex-end; padding: 14px 0 0; font-weight: 900; font-size: 1.05rem; }
+.total-line span:last-child { color: var(--primary); text-align: right; }
 .empty-cart { text-align: center; padding: 24px 0; color: #aaa; font-weight: 700; }
 
 /* SUCCESS */
 #success-view { display: none; }
-.success-icon { width: 72px; height: 72px; background: linear-gradient(135deg, var(--secondary), #4db6ac); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; font-size: 2rem; }
+.success-icon { width: 72px; height: 72px; background: linear-gradient(135deg, var(--secondary), #4db6ac); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; font-size: 2rem; color: white;}
 .success-card { text-align: center; max-width: 480px; margin: 4rem auto; }
 .success-card h2 { font-size: 1.5rem; font-weight: 900; color: var(--secondary); margin-bottom: 10px; }
 .success-card p { color: #555; line-height: 1.65; font-size: .95rem; }
@@ -78,7 +78,6 @@ header { background: #fff; padding: 0 5%; height: 64px; display: flex; align-ite
 
 <div id="checkout-view">
   <div class="page-wrap">
-    <!-- FORM -->
     <div class="card">
       <h2 data-en="Shipping Information" data-ar="معلومات الشحن">Shipping Information</h2>
       <form onsubmit="processCheckout(event)" id="checkout-form">
@@ -93,7 +92,6 @@ header { background: #fff; padding: 0 5%; height: 64px; display: flex; align-ite
       </form>
     </div>
 
-    <!-- ORDER SUMMARY -->
     <div class="card order-sidebar">
       <h2 data-en="Order Summary" data-ar="ملخص الطلب">Order Summary</h2>
       <div id="summary-items"></div>
@@ -105,7 +103,6 @@ header { background: #fff; padding: 0 5%; height: 64px; display: flex; align-ite
   </div>
 </div>
 
-<!-- SUCCESS VIEW -->
 <div id="success-view">
   <div class="success-card">
     <div class="card">
@@ -120,10 +117,14 @@ header { background: #fff; padding: 0 5%; height: 64px; display: flex; align-ite
 
 <script>
 const API = 'https://syriacare-production.up.railway.app/api';
-const RATES = { USD: 1, SYP: 14500 };
+let RATES = { USD: 1, SYP: 14500 }; 
+
 let lang = localStorage.getItem('syriaCareLang') || 'en';
 let cart = JSON.parse(localStorage.getItem('syriaCareCart') || '[]');
 let currentUser = JSON.parse(localStorage.getItem('syriaCareUser') || 'null');
+
+// 🟢 NEW: Grab the Promo code from browser memory
+let promo = JSON.parse(localStorage.getItem('syriaCarePromo') || 'null'); 
 
 function applyLang(l) {
   lang = l;
@@ -136,21 +137,61 @@ function applyLang(l) {
 }
 function toggleLang() { applyLang(lang === 'en' ? 'ar' : 'en'); }
 
+// 🟢 NEW: Fetch the live exchange rate before rendering totals
+async function fetchLiveRate() {
+  try {
+    const response = await fetch(`${API}/rate`);
+    const data = await response.json();
+    if (data.rate) {
+      RATES.SYP = data.rate;
+      renderSummary(); // Re-calculate the prices with the live rate
+    }
+  } catch (error) {
+    console.error("Could not fetch live rate. Using default 14,500.");
+  }
+}
+
 function renderSummary() {
   const cont = document.getElementById('summary-items');
-  if (!cart.length) { cont.innerHTML = `<p class="empty-cart">${lang==='ar'?'السلة فارغة':'Cart is empty'}</p>`; document.getElementById('summary-total').textContent = '—'; return; }
-  let total = 0;
+  if (!cart.length) { 
+    cont.innerHTML = `<p class="empty-cart">${lang==='ar'?'السلة فارغة':'Cart is empty'}</p>`; 
+    document.getElementById('summary-total').textContent = '—'; 
+    return; 
+  }
+  
+  let originalTotal = 0;
   cont.innerHTML = cart.map(item => {
     const qty = item.quantity || 1;
     const line = item.priceUSD * RATES.SYP * qty;
-    total += line;
+    originalTotal += line;
     return `<div class="summary-item">
       <img src="${item.image}" alt="${item.name}" onerror="this.style.display='none'">
       <div style="flex:1"><p class="si-name">${item.name}</p><p class="si-qty">×${qty}</p></div>
       <span class="si-price">${Math.round(line).toLocaleString()} ل.س</span>
     </div>`;
   }).join('');
-  document.getElementById('summary-total').textContent = `${Math.round(total).toLocaleString()} ل.س`;
+
+  // 🟢 NEW: Apply Discount Math to the Visual Total
+  let finalTotal = originalTotal;
+  let summaryHTML = '';
+
+  if (promo && originalTotal > 0) {
+      const discountAmount = originalTotal * (promo.discountPercentage / 100);
+      finalTotal = originalTotal - discountAmount;
+      summaryHTML = `
+        <div style="font-size: 0.85rem; color: #888; text-decoration: line-through; margin-bottom: 5px; font-weight: bold;">
+          ${lang === 'ar' ? 'السعر الأصلي' : 'Original'}: ${Math.round(originalTotal).toLocaleString()} ل.س
+        </div>
+        <div style="font-size: 0.85rem; color: var(--secondary); margin-bottom: 5px; font-weight: bold;">
+          ${lang === 'ar' ? 'خصم' : 'Discount'} (${promo.discountPercentage}%): -${Math.round(discountAmount).toLocaleString()} ل.س
+        </div>
+      `;
+  }
+
+  document.getElementById('summary-total').innerHTML = `
+    ${summaryHTML}
+    <div style="color: var(--primary);">${Math.round(finalTotal).toLocaleString()} ل.س</div>
+  `;
 }
 
 function autoFill() {
@@ -168,19 +209,33 @@ async function processCheckout(e) {
   btn.disabled = true;
   btn.textContent = lang === 'ar' ? 'جاري الإرسال…' : 'Processing…';
 
+  // 🟢 NEW: Calculate the final discounted total to send to the server
+  let originalTotal = cart.reduce((a, x) => a + (x.priceUSD * RATES.SYP * (x.quantity||1)), 0);
+  let finalTotal = originalTotal;
+  
+  if (promo) {
+      finalTotal -= originalTotal * (promo.discountPercentage / 100);
+  }
+
   const orderData = {
     name: document.getElementById('chk-name').value,
     surname: document.getElementById('chk-surname').value,
     phone: document.getElementById('chk-phone').value,
     location: document.getElementById('chk-address').value,
     items: cart,
-    total: cart.reduce((a, x) => a + (x.priceUSD * RATES.SYP * (x.quantity||1)), 0)
+    total: finalTotal, // Sends the discounted price!
+    promoCode: promo ? promo.code : "None",                 // Sends the code name
+    discountPercentage: promo ? promo.discountPercentage : 0 // Sends the discount %
   };
 
   try {
     const res = await fetch(`${API}/orders`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(orderData) });
     if (!res.ok) throw new Error();
+    
+    // Clear cart AND promo code after successful purchase
     localStorage.removeItem('syriaCareCart');
+    localStorage.removeItem('syriaCarePromo');
+    
     document.getElementById('checkout-view').style.display = 'none';
     document.getElementById('success-view').style.display = 'block';
     applyLang(lang);
@@ -193,7 +248,8 @@ async function processCheckout(e) {
 
 applyLang(lang);
 autoFill();
-renderSummary();
+fetchLiveRate(); // This grabs the live rate and automatically runs renderSummary()
+renderSummary(); // Fallback initial render while loading
 </script>
 </body>
 </html>
