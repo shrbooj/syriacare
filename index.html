@@ -276,11 +276,52 @@
                     <label data-en="Password" data-ar="كلمة المرور">Password</label>
                     <input type="password" id="login-password" required>
                 </div>
+                
+                <div style="text-align: right; margin-bottom: 15px; margin-top: -5px;">
+                    <a href="#" onclick="switchModals('login-modal', 'forgot-modal')" style="color: var(--primary); font-size: 0.85rem; font-weight: bold; text-decoration: none;" data-en="Forgot Password?" data-ar="نسيت كلمة المرور؟">Forgot Password?</a>
+                </div>
+
                 <button type="submit" class="btn-primary" data-en="Sign In" data-ar="تسجيل الدخول">Sign In</button>
                 <div style="text-align: center; margin-top: 20px; border-top: 1px solid #eee; padding-top: 15px;">
                     <p style="font-size: 0.9rem; color: #666; font-weight: bold;" data-en="New here?" data-ar="جديد هنا؟">New here?</p>
                     <button type="button" class="btn-outline" onclick="switchModals('login-modal', 'register-modal')" data-en="Create Account" data-ar="إنشاء حساب">Create Account</button>
                 </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="forgot-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 data-en="Reset Password" data-ar="إعادة تعيين كلمة المرور">Reset Password</h3>
+                <button class="close-btn" onclick="toggleModal('forgot-modal')">&times;</button>
+            </div>
+            
+            <form id="forgot-step-1" onsubmit="handleForgotPassword(event)">
+                <div id="forgot-error-1" style="color: #e74c3c; font-size: 0.85rem; font-weight: bold; margin-bottom: 10px; display: none; background: #fce4e4; padding: 10px; border-radius: 8px;"></div>
+                <p style="font-size: 0.9rem; margin-bottom: 15px;" data-en="Enter your registered email address to receive a 6-digit reset code." data-ar="أدخل عنوان بريدك الإلكتروني المسجل لتلقي رمز إعادة التعيين المكون من 6 أرقام.">Enter your registered email address to receive a 6-digit reset code.</p>
+                <div class="form-group">
+                    <label data-en="Email Address" data-ar="البريد الإلكتروني">Email Address</label>
+                    <input type="email" id="forgot-email" required placeholder="example@gmail.com">
+                </div>
+                <button type="submit" class="btn-primary" data-en="Send Code" data-ar="إرسال الرمز">Send Code</button>
+                <div style="text-align: center; margin-top: 15px;">
+                    <a href="#" onclick="switchModals('forgot-modal', 'login-modal')" style="color: #666; font-size: 0.85rem; font-weight: bold; text-decoration: none;" data-en="Back to Login" data-ar="العودة لتسجيل الدخول">Back to Login</a>
+                </div>
+            </form>
+
+            <form id="forgot-step-2" onsubmit="handleResetPassword(event)" style="display: none;">
+                <div id="forgot-error-2" style="color: #e74c3c; font-size: 0.85rem; font-weight: bold; margin-bottom: 10px; display: none; background: #fce4e4; padding: 10px; border-radius: 8px;"></div>
+                <p style="font-size: 0.9rem; margin-bottom: 15px; color: var(--secondary); font-weight: bold;" data-en="Code sent! Please check your email inbox." data-ar="تم إرسال الرمز! يرجى التحقق من صندوق البريد الخاص بك.">Code sent! Please check your email inbox.</p>
+                <div class="form-group">
+                    <label data-en="6-Digit OTP Code" data-ar="رمز التحقق المكون من 6 أرقام">6-Digit OTP Code</label>
+                    <input type="text" id="reset-otp" required maxlength="6" style="letter-spacing: 5px; font-size: 1.2rem; text-align: center; font-weight: 900;">
+                </div>
+                <div class="form-group">
+                    <label data-en="New Password" data-ar="كلمة المرور الجديدة">New Password</label>
+                    <input type="password" id="reset-new-password" required>
+                </div>
+                <button type="submit" class="btn-primary" data-en="Update Password" data-ar="تحديث كلمة المرور">Update Password</button>
             </form>
         </div>
     </div>
@@ -308,6 +349,12 @@
                     <label data-en="Phone Number (9-10 digits)" data-ar="رقم الهاتف (9-10 أرقام)">Phone Number (9-10 digits)</label>
                     <input type="tel" id="reg-phone" required placeholder="Ex: 0933123456">
                 </div>
+                
+                <div class="form-group">
+                    <label data-en="Email Address" data-ar="البريد الإلكتروني">Email Address</label>
+                    <input type="email" id="reg-email" required placeholder="example@gmail.com">
+                </div>
+
                 <div class="form-group">
                     <label data-en="Full Delivery Address" data-ar="عنوان التوصيل بالكامل">Full Delivery Address</label>
                     <textarea id="reg-address" required placeholder="City, Neighborhood, Street, Building..."></textarea>
@@ -357,7 +404,6 @@
 
     <div id="product-modal" class="modal">
         <div class="modal-content" style="max-height: 90vh; overflow-y: auto;">
-            
             <div id="modal-out-of-stock-badge" style="display: none; position: absolute; top: -15px; left: 50%; transform: translateX(-50%); background: #e74c3c; color: white; padding: 6px 16px; border-radius: 20px; font-weight: 900; font-size: 0.9rem; z-index: 10; box-shadow: 0 4px 10px rgba(231,76,60,0.4);">
                 Out of Stock
             </div>
@@ -385,7 +431,6 @@
         let currentLang = localStorage.getItem('syriaCareLang') || 'en';
         let isLoadingProducts = true; 
         
-        // 🟢 ACTIVE PROMO VARIABLE (Reads from memory)
         let activePromo = JSON.parse(localStorage.getItem('syriaCarePromo')) || null;
         
         const arabicCats = {
@@ -494,6 +539,7 @@
             }
         }
 
+        // 🟢 RESTORED: Registration includes Email field
         async function handleRegister(e) {
             e.preventDefault();
             const errorDiv = document.getElementById('reg-error');
@@ -504,6 +550,7 @@
                 const name = document.getElementById('reg-name').value.trim();
                 const surname = document.getElementById('reg-surname').value.trim();
                 const phone = document.getElementById('reg-phone').value.trim();
+                const email = document.getElementById('reg-email').value.trim(); // 🟢 NEW EMAIL
                 const address = document.getElementById('reg-address').value.trim();
                 const password = document.getElementById('reg-password').value;
 
@@ -515,19 +562,12 @@
                     errorDiv.style.display = 'block'; return;
                 }
 
-                if (address.length < 10) {
-                    errorDiv.innerText = currentLang === 'ar' 
-                        ? '❌ يرجى كتابة عنوان التوصيل بالكامل (المدينة، الحي، الشارع، البناء).' 
-                        : '❌ Please provide your full delivery address.';
-                    errorDiv.style.display = 'block'; return;
-                }
-
                 submitBtn.disabled = true;
                 submitBtn.innerText = currentLang === 'ar' ? 'جاري التحميل...' : 'Loading...';
 
                 const response = await fetch(`${API}/users/register`, {
                     method: 'POST', headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ name, surname, phone, address, password })
+                    body: JSON.stringify({ name, surname, phone, email, address, password })
                 });
 
                 const data = await response.json();
@@ -599,6 +639,84 @@
             }
         }
 
+        // 🟢 RESTORED: Forgot Password API Calls
+        async function handleForgotPassword(e) {
+            e.preventDefault();
+            const errorDiv = document.getElementById('forgot-error-1');
+            errorDiv.style.display = 'none';
+            const btn = e.target.querySelector('button[type="submit"]');
+            const email = document.getElementById('forgot-email').value.trim();
+
+            btn.disabled = true;
+            btn.innerText = currentLang === 'ar' ? 'جاري الإرسال...' : 'Sending...';
+
+            try {
+                const response = await fetch(`${API}/users/forgot-password`, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email })
+                });
+                const data = await response.json();
+
+                if (!response.ok) {
+                    errorDiv.innerText = `❌ ${data.error || 'Failed to send.'}`;
+                    errorDiv.style.display = 'block';
+                } else {
+                    document.getElementById('forgot-step-1').style.display = 'none';
+                    document.getElementById('forgot-step-2').style.display = 'block';
+                }
+            } catch (error) {
+                errorDiv.innerText = '❌ Network error.';
+                errorDiv.style.display = 'block';
+            } finally {
+                btn.disabled = false;
+                btn.innerText = currentLang === 'ar' ? 'إرسال الرمز' : 'Send Code';
+            }
+        }
+
+        async function handleResetPassword(e) {
+            e.preventDefault();
+            const errorDiv = document.getElementById('forgot-error-2');
+            errorDiv.style.display = 'none';
+            const btn = e.target.querySelector('button[type="submit"]');
+            const email = document.getElementById('forgot-email').value.trim();
+            const otp = document.getElementById('reset-otp').value.trim();
+            const newPassword = document.getElementById('reset-new-password').value;
+
+            btn.disabled = true;
+            btn.innerText = currentLang === 'ar' ? 'جاري التحديث...' : 'Updating...';
+
+            try {
+                const response = await fetch(`${API}/users/reset-password`, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, otp, newPassword })
+                });
+                const data = await response.json();
+
+                if (!response.ok) {
+                    errorDiv.innerText = `❌ ${data.error || 'Failed to reset.'}`;
+                    errorDiv.style.display = 'block';
+                } else {
+                    toggleModal('forgot-modal');
+                    const toast = document.getElementById("toast");
+                    if (toast) {
+                        toast.innerText = currentLang === 'ar' ? 'تم تحديث كلمة المرور! 🔑' : 'Password Updated! 🔑';
+                        toast.classList.add("show");
+                        setTimeout(() => { toast.classList.remove("show"); }, 3000);
+                    }
+                    document.getElementById('forgot-step-1').style.display = 'block';
+                    document.getElementById('forgot-step-2').style.display = 'none';
+                    document.getElementById('forgot-step-1').reset();
+                    document.getElementById('forgot-step-2').reset();
+                }
+            } catch (error) {
+                errorDiv.innerText = '❌ Network error.';
+                errorDiv.style.display = 'block';
+            } finally {
+                btn.disabled = false;
+                btn.innerText = currentLang === 'ar' ? 'تحديث كلمة المرور' : 'Update Password';
+            }
+        }
+
         function loginUser(user) { currentUser = user; localStorage.setItem('syriaCareUser', JSON.stringify(user)); updateAuthUI(); }
         function handleLogout() { currentUser = null; localStorage.removeItem('syriaCareUser'); updateAuthUI(); }
         function switchModals(closeId, openId) { toggleModal(closeId); toggleModal(openId); }
@@ -645,7 +763,6 @@
                 const data = await response.json();
                 if (data.rate) {
                     RATES.SYP = data.rate;
-                    console.log(`🟢 Live SYP Rate Loaded: 1 USD = ${data.rate} SYP`);
                     renderProducts(); 
                     updateCartUI();   
                 }
@@ -763,7 +880,6 @@
             renderPaginationControls(totalPages);
             updateCartUI();
         }
-        
 
         function showProductDetails(productId) {
             const product = products.find(p => p._id === productId || p.id === productId);
@@ -889,7 +1005,6 @@
             }
         }
         
-        // 🟢 MODIFIED: Apply Promo Code Function (Saves to Memory)
         async function applyPromoCode() {
             const input = document.getElementById('promo-input');
             const messageEl = document.getElementById('promo-message');
@@ -914,14 +1029,14 @@
                     messageEl.style.color = '#e74c3c';
                     messageEl.innerText = `❌ ${data.error}`;
                     activePromo = null; 
-                    localStorage.removeItem('syriaCarePromo'); // 🟢 Clears invalid code from memory
+                    localStorage.removeItem('syriaCarePromo');
                 } else {
                     messageEl.style.color = 'var(--secondary)';
                     messageEl.innerText = currentLang === 'ar' 
                         ? `✅ تم تطبيق خصم ${data.discountPercentage}%!` 
                         : `✅ ${data.discountPercentage}% Discount Applied!`;
                     activePromo = data; 
-                    localStorage.setItem('syriaCarePromo', JSON.stringify(data)); // 🟢 Saves valid code to memory
+                    localStorage.setItem('syriaCarePromo', JSON.stringify(data)); 
                 }
                 
                 updateCartUI(); 
@@ -932,7 +1047,6 @@
             }
         }
 
-        // 🟢 MODIFIED: Update Cart UI logic includes the discount calculation
         function updateCartUI() {
             const list = document.getElementById('cart-items');
             const currencyToggle = document.getElementById('currency-toggle');
@@ -991,7 +1105,6 @@
                 }
             }
             
-            // 🟢 Apply discount logic to the final total
             let finalTotal = grandTotal;
             const originalTotalEl = document.getElementById('original-total-display');
             
