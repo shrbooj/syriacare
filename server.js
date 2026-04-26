@@ -1,7 +1,9 @@
+require('dotenv').config(); // 🟢 NEW: Loads your secret passwords
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
-const https = require('https'); 
+const https = require('https');
+const nodemailer = require('nodemailer'); // 🟢 NEW: The email bot
 
 const app = express();
 app.use(cors()); 
@@ -9,6 +11,15 @@ app.use('/images', express.static('images'));
 app.use(express.json({ limit: '10mb' })); 
 
 const MONGO_URI = "mongodb+srv://karimlaham232_db_user:karim.1234@cluster0.rcrmtnz.mongodb.net/syriacare?retryWrites=true&w=majority";
+
+// 🟢 NEW: Configure the Nodemailer bot using your secret .env file
+const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+        user: process.env.EMAIL_USER, 
+        pass: process.env.EMAIL_PASS  
+    }
+});
 
 // ==========================================
 // SCHEMAS (Database Structure)
@@ -23,7 +34,7 @@ const productSchema = new mongoose.Schema({
     priceUSD: Number,
     originalTRY: Number,
     description: String,
-    inStock: { type: Boolean, default: true } // Out of stock tracker
+    inStock: { type: Boolean, default: true }
 });
 const Product = mongoose.model('Product', productSchema);
 
@@ -43,8 +54,11 @@ const userSchema = new mongoose.Schema({
     name: String,
     surname: String,
     phone: String,
+    email: { type: String, required: true }, // 🟢 NEW: We now collect emails
     address: String,
     password: String,
+    resetOTP: String, // 🟢 NEW: Temporarily holds the 6-digit code
+    otpExpiry: Date,  // 🟢 NEW: Tracks when the code expires
     date: { type: Date, default: Date.now }
 });
 const User = mongoose.model('User', userSchema);
@@ -53,12 +67,10 @@ const User = mongoose.model('User', userSchema);
 // API ROUTES
 // ==========================================
 
-// RAILWAY HEALTHCHECK
 app.get('/', (req, res) => {
     res.status(200).send('SyriaCare Express API is live! 🚀');
 });
 
-// PING
 app.get('/ping', async (req, res) => {
     try {
         await mongoose.connection.db.admin().ping();
@@ -68,7 +80,6 @@ app.get('/ping', async (req, res) => {
     }
 });
 
-// LIVE SYRIAN POUND EXCHANGE RATE API
 let cachedSYPRate = 14500; 
 let lastRateFetch = 0;
 
@@ -101,11 +112,8 @@ app.get('/api/rate', (req, res) => {
 
 // --- PRODUCT ROUTES ---
 app.get('/api/products', async (req, res) => {
-    try { 
-        res.json(await Product.find({})); 
-    } catch (err) { 
-        res.status(500).json({ message: "Error fetching products" }); 
-    }
+    try { res.json(await Product.find({})); } 
+    catch (err) { res.status(500).json({ message: "Error fetching products" }); }
 });
 
 app.post('/api/products', async (req, res) => {
@@ -113,9 +121,7 @@ app.post('/api/products', async (req, res) => {
         const newProduct = new Product(req.body);
         await newProduct.save();
         res.json({ message: "Product saved!", product: newProduct });
-    } catch (err) { 
-        res.status(500).json({ message: "Error saving product" }); 
-    }
+    } catch (err) { res.status(500).json({ message: "Error saving product" }); }
 });
 
 app.put('/api/products/:id', async (req, res) => {
@@ -124,9 +130,7 @@ app.put('/api/products/:id', async (req, res) => {
         const query = isValidObjectId ? { _id: req.params.id } : { id: req.params.id };
         const updatedProduct = await Product.findOneAndUpdate(query, { $set: req.body }, { new: true });
         res.json({ success: true, product: updatedProduct });
-    } catch (error) { 
-        res.status(500).json({ error: "Failed to update" }); 
-    }
+    } catch (error) { res.status(500).json({ error: "Failed to update" }); }
 });
 
 app.delete('/api/products/:id', async (req, res) => {
@@ -135,9 +139,7 @@ app.delete('/api/products/:id', async (req, res) => {
         const query = isValidObjectId ? { _id: req.params.id } : { id: req.params.id };
         await Product.deleteOne(query);
         res.json({ success: true });
-    } catch (error) { 
-        res.status(500).json({ error: "Failed to delete" }); 
-    }
+    } catch (error) { res.status(500).json({ error: "Failed to delete" }); }
 });
 
 // --- ORDER ROUTES ---
@@ -146,25 +148,17 @@ app.post('/api/orders', async (req, res) => {
         const newOrder = new Order(req.body);
         await newOrder.save();
         res.json({ success: true, order: newOrder });
-    } catch (error) { 
-        res.status(500).json({ error: "Failed to save order" }); 
-    }
+    } catch (error) { res.status(500).json({ error: "Failed to save order" }); }
 });
 
 app.get('/api/orders', async (req, res) => {
-    try { 
-        res.json(await Order.find().sort({ date: -1 })); 
-    } catch (error) { 
-        res.status(500).json({ error: "Failed to fetch orders" }); 
-    }
+    try { res.json(await Order.find().sort({ date: -1 })); } 
+    catch (error) { res.status(500).json({ error: "Failed to fetch orders" }); }
 });
 
 app.get('/api/orders/phone/:phone', async (req, res) => {
-    try { 
-        res.json(await Order.find({ phone: req.params.phone }).sort({ date: -1 })); 
-    } catch (error) { 
-        res.status(500).json({ error: "Failed to fetch user orders" }); 
-    }
+    try { res.json(await Order.find({ phone: req.params.phone }).sort({ date: -1 })); } 
+    catch (error) { res.status(500).json({ error: "Failed to fetch user orders" }); }
 });
 
 app.put('/api/orders/:id', async (req, res) => {
@@ -175,54 +169,90 @@ app.put('/api/orders/:id', async (req, res) => {
             { new: true }
         );
         res.json({ success: true, order: updatedOrder });
-    } catch (error) { 
-        res.status(500).json({ error: "Failed to update order status" }); 
-    }
+    } catch (error) { res.status(500).json({ error: "Failed to update order status" }); }
 });
 
-// 🟢 NEW: DELETE ORDER ROUTE
 app.delete('/api/orders/:id', async (req, res) => {
     try {
         await Order.findByIdAndDelete(req.params.id);
         res.json({ success: true });
-    } catch (error) { 
-        res.status(500).json({ error: "Failed to delete order" }); 
-    }
+    } catch (error) { res.status(500).json({ error: "Failed to delete order" }); }
 });
 
 // --- USER ACCOUNTS ROUTES ---
 app.post('/api/users/register', async (req, res) => {
     try {
-        const existingUser = await User.findOne({ phone: req.body.phone });
-        if (existingUser) {
-            return res.status(400).json({ error: "Phone number is already registered." });
-        }
+        const existingPhone = await User.findOne({ phone: req.body.phone });
+        if (existingPhone) return res.status(400).json({ error: "Phone number is already registered." });
+        
+        const existingEmail = await User.findOne({ email: req.body.email });
+        if (existingEmail) return res.status(400).json({ error: "Email is already registered." });
+
         const newUser = new User(req.body);
         await newUser.save();
         res.json({ success: true, user: newUser });
-    } catch (err) { 
-        res.status(500).json({ error: "Registration failed." }); 
-    }
+    } catch (err) { res.status(500).json({ error: "Registration failed." }); }
 });
 
 app.post('/api/users/login', async (req, res) => {
     try {
         const user = await User.findOne({ phone: req.body.phone, password: req.body.password });
-        if (!user) {
-            return res.status(401).json({ error: "Invalid phone number or password." });
-        }
+        if (!user) return res.status(401).json({ error: "Invalid phone number or password." });
         res.json({ success: true, user });
-    } catch (err) { 
-        res.status(500).json({ error: "Login failed." }); 
-    }
+    } catch (err) { res.status(500).json({ error: "Login failed." }); }
 });
 
 app.get('/api/users', async (req, res) => {
-    try { 
-        res.json(await User.find().sort({ date: -1 }).select('-password')); 
-    } catch (err) { 
-        res.status(500).json({ error: "Failed to fetch users." }); 
+    try { res.json(await User.find().sort({ date: -1 }).select('-password')); } 
+    catch (err) { res.status(500).json({ error: "Failed to fetch users." }); }
+});
+
+// 🟢 NEW: FORGOT PASSWORD ROUTE (Sends Email)
+app.post('/api/users/forgot-password', async (req, res) => {
+    try {
+        const user = await User.findOne({ email: req.body.email });
+        if (!user) return res.status(400).json({ error: "Email not found in our system." });
+
+        // Generate 6 digit code
+        const otp = Math.floor(100000 + Math.random() * 900000).toString();
+        
+        // Save to DB (Valid for 10 minutes)
+        user.resetOTP = otp;
+        user.otpExpiry = Date.now() + 10 * 60 * 1000; 
+        await user.save();
+
+        const mailOptions = {
+            from: `"SyriaCare Support" <${process.env.EMAIL_USER}>`,
+            to: user.email,
+            subject: 'SyriaCare Express - Password Reset Code',
+            text: `Hi ${user.name},\n\nYour password reset code is: ${otp}\n\nThis code will expire in 10 minutes. If you did not request this, please ignore this email.`
+        };
+
+        await transporter.sendMail(mailOptions);
+        res.json({ success: true, message: "OTP sent to your email!" });
+    } catch (err) {
+        console.error("Email Error:", err);
+        res.status(500).json({ error: "Failed to send email. Check server configuration." });
     }
+});
+
+// 🟢 NEW: RESET PASSWORD ROUTE (Verifies Code)
+app.post('/api/users/reset-password', async (req, res) => {
+    try {
+        const { email, otp, newPassword } = req.body;
+        const user = await User.findOne({ email });
+
+        if (!user || user.resetOTP !== otp || user.otpExpiry < Date.now()) {
+            return res.status(400).json({ error: "Invalid or expired OTP code." });
+        }
+
+        user.password = newPassword;
+        user.resetOTP = undefined;
+        user.otpExpiry = undefined;
+        await user.save();
+
+        res.json({ success: true, message: "Password reset successfully!" });
+    } catch (err) { res.status(500).json({ error: "Failed to reset password." }); }
 });
 
 // ==========================================
@@ -241,12 +271,8 @@ mongoose.connect(MONGO_URI, {
     serverSelectionTimeoutMS: 5000, 
     family: 4
 })
-.then(() => {
-    console.log("🟢 SUCCESS: Connected to MongoDB Atlas!");
-})
-.catch(err => {
-    console.error("🔴 DATABASE CONNECTION ERROR:", err.message);
-});
+.then(() => console.log("🟢 SUCCESS: Connected to MongoDB Atlas!"))
+.catch(err => console.error("🔴 DATABASE CONNECTION ERROR:", err.message));
 
 process.on('SIGTERM', () => {
     server.close(() => {
