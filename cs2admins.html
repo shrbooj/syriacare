@@ -101,6 +101,9 @@ tr:hover td { background: #fdfbff; }
   <div class="nav-item" id="tab-users" onclick="switchTab('users')"><span class="icon">👥</span> Customers</div>
   <div class="nav-item" id="tab-add" onclick="switchTab('add')"><span class="icon">➕</span> Add Product</div>
   <div class="nav-item" id="tab-manage" onclick="switchTab('manage')"><span class="icon">🗂️</span> Products</div>
+  
+  <div class="nav-item" id="tab-promo" onclick="switchTab('promo')"><span class="icon">🎟️</span> Promos</div>
+
   <div class="sidebar-footer">
     <a href="index.html">🌍 View Live Store</a>
   </div>
@@ -125,7 +128,7 @@ tr:hover td { background: #fdfbff; }
         </div>
       </div>
       <table>
-        <thead><tr><th>Date</th><th>Customer</th><th>Phone</th><th>Total (SYP)</th><th>Items</th><th>Status</th></tr></thead>
+        <thead><tr><th>Date</th><th>Customer</th><th>Phone</th><th>Total (SYP)</th><th>Items & Promo</th><th>Status</th></tr></thead>
         <tbody id="orders-tbody"><tr class="loading-row"><td colspan="6">Loading orders…</td></tr></tbody>
       </table>
     </div>
@@ -217,6 +220,30 @@ tr:hover td { background: #fdfbff; }
     </div>
   </div>
 
+  <div id="page-promo" class="page">
+    <div class="page-title">Manage Promo Codes</div>
+    
+    <div class="form-card" style="max-width: 100%; margin-bottom: 20px;">
+        <form onsubmit="createPromoCode(event)" style="display: flex; gap: 10px; flex-wrap: wrap;">
+            <input type="text" id="new-promo-code" placeholder="Code Name (e.g. SUMMER20)" required style="flex: 2; padding: 12px 14px; border: 2px solid var(--border); border-radius: 9px; font-weight: bold; text-transform: uppercase;">
+            <input type="number" id="new-promo-percent" placeholder="Discount % (e.g. 20)" required min="1" max="100" style="flex: 1; padding: 12px 14px; border: 2px solid var(--border); border-radius: 9px; font-weight: bold;">
+            <button type="submit" class="btn-save" style="width: auto; margin: 0; padding: 10px 24px;">➕ Add Code</button>
+        </form>
+    </div>
+
+    <div class="table-wrap">
+        <div class="table-head">
+            <h3>Active Promo Codes</h3>
+        </div>
+        <table>
+            <thead><tr><th>Promo Code Name</th><th>Discount Amount</th><th>Actions</th></tr></thead>
+            <tbody id="promo-tbody">
+                <tr class="loading-row"><td colspan="3">Loading promos…</td></tr>
+            </tbody>
+        </table>
+    </div>
+  </div>
+
 </div>
 
 <div id="toast"></div>
@@ -246,6 +273,7 @@ function switchTab(name) {
   }
   if (name === 'manage') renderProductsTable(allProducts);
   if (name === 'users') renderUsersTable(allUsers);
+  if (name === 'promo') loadAdminPromos(); // 🟢 Load promos when tab opens
 }
 
 async function fetchUsers() {
@@ -312,13 +340,20 @@ function renderOrdersTable(orders) {
     const cls = 'st-' + (o.status||'Pending').replace(/ /g,'-');
     const items = (o.items||[]).map(x => `<li>${x.name||x} ×${x.quantity||1}</li>`).join('');
     
-    // 🟢 NEW: Added the delete button div right next to the status select
+    // 🟢 NEW: Displays Promo Code if used on the order
+    const promoBadge = (o.promoCode && o.promoCode !== "None") 
+      ? `<div style="margin-top:5px; display:inline-block; background:#eaddf4; color:var(--primary); padding:2px 8px; border-radius:10px; font-size:0.75rem; font-weight:bold;">🎟️ ${o.promoCode} (-${o.discountPercentage}%)</div>` 
+      : '';
+
     html += `<tr>
       <td>${new Date(o.createdAt||o.date).toLocaleDateString()}</td>
       <td><strong>${o.name||'—'} ${o.surname||''}</strong></td>
       <td>${o.phone||'—'}</td>
       <td><strong>${(o.total||0).toLocaleString()}</strong></td>
-      <td><ul style="padding-left:14px;font-size:.78rem;color:#555">${items||'<li>—</li>'}</ul></td>
+      <td>
+        <ul style="padding-left:14px;font-size:.78rem;color:#555;margin-bottom:4px;">${items||'<li>—</li>'}</ul>
+        ${promoBadge}
+      </td>
       <td>
         <div style="display: flex; gap: 8px; align-items: center;">
             <select class="status-select ${cls}" onchange="updateStatus('${o._id}',this)">${opts}</select>
@@ -342,7 +377,6 @@ async function updateStatus(id, sel) {
   } catch { showToast('Update failed ❌'); }
 }
 
-// 🟢 NEW: Function to delete an order
 async function deleteOrder(id) {
   if (!confirm('Are you sure you want to permanently delete this order?')) return;
   try {
@@ -501,6 +535,96 @@ function showToast(msg) {
   t.textContent = msg; t.classList.add('show');
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => t.classList.remove('show'), 2800);
+}
+
+// 🟢 NEW: PROMO CODE JAVASCRIPT
+async function loadAdminPromos() {
+    const tb = document.getElementById('promo-tbody');
+    tb.innerHTML = '<tr class="loading-row"><td colspan="3">Loading promos…</td></tr>';
+    
+    try {
+        const response = await fetch(`${API}/promo`);
+        const promos = await response.json();
+        
+        if (promos.length === 0) {
+            tb.innerHTML = '<tr class="loading-row"><td colspan="3" style="color: #888;">No active promo codes.</td></tr>';
+            return;
+        }
+
+        let html = '';
+        promos.forEach(promo => {
+            html += `
+                <tr>
+                    <td><strong style="font-size: 1.1rem; color: var(--primary); letter-spacing: 1px;">${promo.code}</strong></td>
+                    <td>
+                        <span style="background: #eaddf4; color: var(--primary); padding: 4px 10px; border-radius: 12px; font-size: 0.85rem; font-weight: 900;">
+                            ${promo.discountPercentage}% OFF
+                        </span>
+                    </td>
+                    <td>
+                        <button onclick="deletePromoCode('${promo._id}')" class="btn-del" style="margin: 0;">🗑️ Delete</button>
+                    </td>
+                </tr>
+            `;
+        });
+        tb.innerHTML = html;
+    } catch (error) {
+        tb.innerHTML = '<tr class="loading-row"><td colspan="3" style="color: #e74c3c;">Failed to load promos.</td></tr>';
+    }
+}
+
+async function createPromoCode(e) {
+    e.preventDefault();
+    const btn = e.target.querySelector('button');
+    btn.disabled = true;
+    
+    const codeInput = document.getElementById('new-promo-code');
+    const percentInput = document.getElementById('new-promo-percent');
+    
+    const code = codeInput.value.trim();
+    const discountPercentage = parseInt(percentInput.value);
+
+    try {
+        const response = await fetch(`${API}/promo`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ code, discountPercentage })
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+            codeInput.value = '';
+            percentInput.value = '';
+            loadAdminPromos(); 
+            showToast(`Promo ${data.promo.code} added! ✅`);
+        } else {
+            showToast(data.error || 'Error creating code ❌');
+        }
+    } catch (error) {
+        showToast('Network error ❌');
+    } finally {
+        btn.disabled = false;
+    }
+}
+
+async function deletePromoCode(promoId) {
+    if (!confirm('Are you sure you want to permanently delete this promo code?')) return;
+    
+    try {
+        const response = await fetch(`${API}/promo/${promoId}`, {
+            method: 'DELETE'
+        });
+        
+        if (response.ok) {
+            loadAdminPromos();
+            showToast('Promo code deleted! ✅');
+        } else {
+            showToast('Failed to delete promo ❌');
+        }
+    } catch (error) {
+        showToast('Network error ❌');
+    }
 }
 
 init();
