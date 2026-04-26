@@ -329,7 +329,15 @@
                 <button class="close-btn" onclick="toggleModal('cart-modal')">&times;</button>
             </div>
             <div id="cart-items"></div>
-            <div style="text-align: end; font-size: 1.2rem; font-weight: 900; margin-bottom: 20px; border-top: 2px solid #eee; padding-top: 15px;">
+            
+            <div style="margin-top: 15px; padding: 10px; background: #fafafa; border-radius: 8px; border: 1.5px dashed #ccc; display: flex; gap: 8px; align-items: center;">
+                <input type="text" id="promo-input" placeholder="Promo Code" style="flex: 1; padding: 8px; border: 1.5px solid #eee; border-radius: 6px; font-weight: bold; text-transform: uppercase;">
+                <button onclick="applyPromoCode()" style="background: var(--primary); color: white; border: none; padding: 8px 15px; border-radius: 6px; font-weight: bold; cursor: pointer;" data-en="Apply" data-ar="تطبيق">Apply</button>
+            </div>
+            <div id="promo-message" style="font-size: 0.85rem; font-weight: bold; margin-top: 8px; display: none;"></div>
+
+            <div style="text-align: end; font-size: 1.2rem; font-weight: 900; margin-bottom: 20px; border-top: 2px solid #eee; margin-top: 15px; padding-top: 15px;">
+                <div id="original-total-display" style="display: none; font-size: 0.9rem; color: #888; text-decoration: line-through; margin-bottom: 5px;"></div>
                 <span data-en="Total:" data-ar="المجموع:">Total:</span> <span id="cart-total" style="color: var(--primary);">0</span> <span id="cart-currency" style="color: var(--primary); font-size: 1rem;">USD</span>
             </div>
             <button class="btn-primary" onclick="proceedToCheckout()" data-en="Proceed to Checkout" data-ar="إتمام عملية الدفع">Proceed to Checkout</button>
@@ -376,6 +384,9 @@
         const PRODUCTS_PER_PAGE = 24;
         let currentLang = localStorage.getItem('syriaCareLang') || 'en';
         let isLoadingProducts = true; 
+        
+        // 🟢 NEW: Active Promo Variable
+        let activePromo = null;
         
         const arabicCats = {
             'Makeup': 'مكياج', 'Skin Care': 'العناية بالبشرة', 'Hair Care': 'العناية بالشعر',
@@ -877,7 +888,49 @@
                 setTimeout(() => { toast.classList.remove("show"); }, 3000);
             }
         }
+        
+        // 🟢 NEW: Apply Promo Code Function
+        async function applyPromoCode() {
+            const input = document.getElementById('promo-input');
+            const messageEl = document.getElementById('promo-message');
+            const code = input.value.trim();
 
+            if (!code) return;
+
+            messageEl.style.display = 'block';
+            messageEl.style.color = '#555';
+            messageEl.innerText = currentLang === 'ar' ? 'جاري التحقق...' : 'Checking...';
+
+            try {
+                const response = await fetch(`${API}/promo/apply`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ code })
+                });
+                
+                const data = await response.json();
+
+                if (!response.ok) {
+                    messageEl.style.color = '#e74c3c';
+                    messageEl.innerText = `❌ ${data.error}`;
+                    activePromo = null; 
+                } else {
+                    messageEl.style.color = 'var(--secondary)';
+                    messageEl.innerText = currentLang === 'ar' 
+                        ? `✅ تم تطبيق خصم ${data.discountPercentage}%!` 
+                        : `✅ ${data.discountPercentage}% Discount Applied!`;
+                    activePromo = data; 
+                }
+                
+                updateCartUI(); 
+
+            } catch (error) {
+                messageEl.style.color = '#e74c3c';
+                messageEl.innerText = '❌ Network Error.';
+            }
+        }
+
+        // 🟢 MODIFIED: Update Cart UI logic includes the discount calculation
         function updateCartUI() {
             const list = document.getElementById('cart-items');
             const currencyToggle = document.getElementById('currency-toggle');
@@ -891,6 +944,7 @@
             if (countEl) countEl.innerText = totalItemCount;
             if (list) list.innerHTML = '';
             let grandTotal = 0;
+            
             if (cart.length === 0) {
                 if (list) list.innerHTML = `<p style="text-align:center; color:#888; font-weight:800; padding:20px;">${currentLang === 'ar' ? 'سلتك فارغة' : 'Your cart is empty'}</p>`;
             } else {
@@ -934,9 +988,27 @@
                     });
                 }
             }
+            
+            // 🟢 NEW: Apply discount logic to the final total
+            let finalTotal = grandTotal;
+            const originalTotalEl = document.getElementById('original-total-display');
+            
+            if (activePromo && grandTotal > 0) {
+                const discountAmount = grandTotal * (activePromo.discountPercentage / 100);
+                finalTotal = grandTotal - discountAmount;
+                
+                originalTotalEl.style.display = 'block';
+                originalTotalEl.innerText = currency === 'USD' 
+                    ? `Original: $${grandTotal.toFixed(2)}` 
+                    : `Original: ${Math.round(grandTotal).toLocaleString()} ل.س`;
+            } else {
+                originalTotalEl.style.display = 'none';
+            }
+
             const totalEl = document.getElementById('cart-total');
             const currEl = document.getElementById('cart-currency');
-            if (totalEl) totalEl.innerText = currency === 'USD' ? grandTotal.toFixed(2) : Math.round(grandTotal).toLocaleString();
+            
+            if (totalEl) totalEl.innerText = currency === 'USD' ? finalTotal.toFixed(2) : Math.round(finalTotal).toLocaleString();
             if (currEl) currEl.innerText = currency;
         }
 
@@ -956,24 +1028,22 @@
             updateCartUI();
         }
 
-        // 🟢 NEW: Added the proceedToCheckout function here!
         function proceedToCheckout() {
             if (cart.length === 0) {
                 const toast = document.getElementById("toast");
                 if (toast) {
                     toast.innerText = currentLang === 'ar' ? 'سلتك فارغة! ❌' : 'Your cart is empty! ❌';
-                    toast.style.backgroundColor = '#e74c3c'; // Make the error red
+                    toast.style.backgroundColor = '#e74c3c'; 
                     toast.classList.add("show");
                     
                     setTimeout(() => { 
                         toast.classList.remove("show"); 
-                        toast.style.backgroundColor = 'var(--secondary)'; // Reset color back to normal green
+                        toast.style.backgroundColor = 'var(--secondary)'; 
                     }, 3000);
                 }
-                return; // Stop the code here so they don't go to checkout
+                return; 
             }
             
-            // If they have items, take them to the checkout page
             window.location.href = 'checkout.html';
         }
 
