@@ -44,6 +44,8 @@ const orderSchema = new mongoose.Schema({
     location: String,
     items: Array,
     total: Number,
+    promoCode: String,          // 🟢 NEW: Saves the code (e.g., "SYRIA10")
+    discountPercentage: Number, // 🟢 NEW: Saves the amount (e.g., 10)
     status: { type: String, default: 'Pending' }, 
     date: { type: Date, default: Date.now }
 });
