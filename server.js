@@ -1,9 +1,9 @@
-require('dotenv').config(); // 🟢 NEW: Loads your secret passwords
+require('dotenv').config(); 
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const https = require('https');
-const nodemailer = require('nodemailer'); // 🟢 NEW: The email bot
+const nodemailer = require('nodemailer'); 
 
 const app = express();
 app.use(cors()); 
@@ -12,7 +12,6 @@ app.use(express.json({ limit: '10mb' }));
 
 const MONGO_URI = "mongodb+srv://karimlaham232_db_user:karim.1234@cluster0.rcrmtnz.mongodb.net/syriacare?retryWrites=true&w=majority";
 
-// 🟢 NEW: Configure the Nodemailer bot using your secret .env file
 const transporter = nodemailer.createTransport({
     service: 'gmail',
     auth: {
@@ -54,14 +53,23 @@ const userSchema = new mongoose.Schema({
     name: String,
     surname: String,
     phone: String,
-    email: { type: String, required: true }, // 🟢 NEW: We now collect emails
+    email: { type: String, required: true }, 
     address: String,
     password: String,
-    resetOTP: String, // 🟢 NEW: Temporarily holds the 6-digit code
-    otpExpiry: Date,  // 🟢 NEW: Tracks when the code expires
+    resetOTP: String, 
+    otpExpiry: Date,  
     date: { type: Date, default: Date.now }
 });
 const User = mongoose.model('User', userSchema);
+
+// 🟢 NEW: Promo Code Schema
+const promoSchema = new mongoose.Schema({
+    code: { type: String, required: true, unique: true, uppercase: true },
+    discountPercentage: { type: Number, required: true }, 
+    isActive: { type: Boolean, default: true },
+    expiryDate: Date 
+});
+const Promo = mongoose.model('Promo', promoSchema);
 
 // ==========================================
 // API ROUTES
@@ -207,16 +215,13 @@ app.get('/api/users', async (req, res) => {
     catch (err) { res.status(500).json({ error: "Failed to fetch users." }); }
 });
 
-// 🟢 NEW: FORGOT PASSWORD ROUTE (Sends Email)
 app.post('/api/users/forgot-password', async (req, res) => {
     try {
         const user = await User.findOne({ email: req.body.email });
         if (!user) return res.status(400).json({ error: "Email not found in our system." });
 
-        // Generate 6 digit code
         const otp = Math.floor(100000 + Math.random() * 900000).toString();
         
-        // Save to DB (Valid for 10 minutes)
         user.resetOTP = otp;
         user.otpExpiry = Date.now() + 10 * 60 * 1000; 
         await user.save();
@@ -236,7 +241,6 @@ app.post('/api/users/forgot-password', async (req, res) => {
     }
 });
 
-// 🟢 NEW: RESET PASSWORD ROUTE (Verifies Code)
 app.post('/api/users/reset-password', async (req, res) => {
     try {
         const { email, otp, newPassword } = req.body;
@@ -255,6 +259,26 @@ app.post('/api/users/reset-password', async (req, res) => {
     } catch (err) { res.status(500).json({ error: "Failed to reset password." }); }
 });
 
+// 🟢 NEW: PROMO CODE ROUTE
+app.post('/api/promo/apply', async (req, res) => {
+    try {
+        const { code } = req.body;
+        const promo = await Promo.findOne({ code: code.toUpperCase(), isActive: true });
+
+        if (!promo) {
+            return res.status(400).json({ error: "Invalid or inactive promo code." });
+        }
+
+        if (promo.expiryDate && promo.expiryDate < Date.now()) {
+            return res.status(400).json({ error: "This promo code has expired." });
+        }
+
+        res.json({ success: true, discountPercentage: promo.discountPercentage, code: promo.code });
+    } catch (err) {
+        res.status(500).json({ error: "Failed to validate promo code." });
+    }
+});
+
 // ==========================================
 // CONNECT AND START
 // ==========================================
@@ -271,7 +295,18 @@ mongoose.connect(MONGO_URI, {
     serverSelectionTimeoutMS: 5000, 
     family: 4
 })
-.then(() => console.log("🟢 SUCCESS: Connected to MongoDB Atlas!"))
+.then(async () => {
+    console.log("🟢 SUCCESS: Connected to MongoDB Atlas!");
+    
+    // 🟢 NEW: Create a test promo code automatically when the server starts
+    try {
+        const existing = await Promo.findOne({ code: 'SYRIA10' });
+        if (!existing) {
+            await new Promo({ code: 'SYRIA10', discountPercentage: 10 }).save();
+            console.log("🎁 Test Promo Code SYRIA10 (10% off) created automatically!");
+        }
+    } catch (err) { console.error(err); }
+})
 .catch(err => console.error("🔴 DATABASE CONNECTION ERROR:", err.message));
 
 process.on('SIGTERM', () => {
