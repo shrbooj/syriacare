@@ -4,6 +4,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SyriaCare Express</title>
+
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-6F29ZXZCDE"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'G-6F29ZXZCDE');
+    </script>
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
     <style>
@@ -315,7 +325,6 @@
                 
                 <div class="form-group" style="background: #f4edf9; padding: 15px; border-radius: 8px; border: 1px solid #eaddf4; margin-bottom: 15px;">
                     <label data-en="Security Question" data-ar="سؤال الأمان" style="color: var(--secondary);">Security Question</label>
-                    
                     <p id="display-security-question" style="font-weight: 900; font-size: 1.05rem; margin-top: 5px; margin-bottom: 0; color: var(--primary);"></p>
                 </div>
                 
@@ -527,7 +536,7 @@
                 }
             });
 
-            // 🟢 Update the dynamic security question if it's currently displayed!
+            // Update the dynamic security question if it's currently displayed
             const qEl = document.getElementById('display-security-question');
             if (qEl && qEl.hasAttribute('data-en')) {
                 qEl.innerText = qEl.getAttribute(`data-${lang}`);
@@ -689,22 +698,16 @@
                     errorDiv.innerText = `❌ ${data.error || 'Failed to find account.'}`;
                     errorDiv.style.display = 'block';
                 } else {
-                    // 🟢 NEW: Store and translate the dynamic database question perfectly!
                     const qEl = document.getElementById('display-security-question');
                     
-                    // Always save the English version as data-en
                     qEl.setAttribute('data-en', data.question);
                     
-                    // Create the Arabic version manually
                     let arQ = data.question;
                     if (data.question === "What is your mother's maiden name?") arQ = "ما هو اسم عائلة والدتك قبل الزواج؟";
                     else if (data.question === "What was the name of your first pet?") arQ = "ما هو اسم حيوانك الأليف الأول؟";
                     else if (data.question === "What city were you born in?") arQ = "في أي مدينة ولدت؟";
                     
-                    // Save the Arabic version as data-ar
                     qEl.setAttribute('data-ar', arQ);
-                    
-                    // Display the right language right now
                     qEl.innerText = currentLang === 'ar' ? arQ : data.question;
 
                     document.getElementById('forgot-step-1').style.display = 'none';
@@ -892,8 +895,8 @@
                 const imgOpacity = isOutOfStock ? 'opacity: 0.5; filter: grayscale(100%);' : '';
                 
                 const addBtnHtml = isOutOfStock
-                    ? `<button class="price-add-btn" style="background: #ccc; cursor: not-allowed;" disabled>+</button>`
-                    : `<button class="price-add-btn" onclick="addToCart('${productId}')">+</button>`;
+                    ? `<button class=\"price-add-btn\" style=\"background: #ccc; cursor: not-allowed;\" disabled>+</button>`
+                    : `<button class=\"price-add-btn\" onclick=\"addToCart('${productId}')\">+</button>`;
 
                 grid.innerHTML += `
                     <div class="card">
