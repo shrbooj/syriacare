@@ -3,7 +3,6 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const https = require('https');
-const nodemailer = require('nodemailer'); 
 
 const app = express();
 app.use(cors()); 
@@ -11,15 +10,6 @@ app.use('/images', express.static('images'));
 app.use(express.json({ limit: '10mb' })); 
 
 const MONGO_URI = "mongodb+srv://karimlaham232_db_user:karim.1234@cluster0.rcrmtnz.mongodb.net/syriacare?retryWrites=true&w=majority";
-
-// Configure the Nodemailer bot using your secret .env variables
-const transporter = nodemailer.createTransport({
-    service: 'gmail',
-    auth: {
-        user: process.env.EMAIL_USER, 
-        pass: process.env.EMAIL_PASS  
-    }
-});
 
 // ==========================================
 // SCHEMAS (Database Structure)
@@ -45,22 +35,22 @@ const orderSchema = new mongoose.Schema({
     location: String,
     items: Array,
     total: Number,
-    promoCode: String,          // 🟢 Saves the promo code (e.g., "SYRIA10")
-    discountPercentage: Number, // 🟢 Saves the discount amount (e.g., 10)
+    promoCode: String,
+    discountPercentage: Number,
     status: { type: String, default: 'Pending' }, 
     date: { type: Date, default: Date.now }
 });
 const Order = mongoose.model('Order', orderSchema);
 
+// 🟢 MODIFIED: Removed email, added security question fields
 const userSchema = new mongoose.Schema({
     name: String,
     surname: String,
-    phone: String,
-    email: { type: String, required: true }, 
+    phone: { type: String, required: true },
     address: String,
-    password: String,
-    resetOTP: String, 
-    otpExpiry: Date,  
+    password: { type: String, required: true },
+    securityQuestion: String, 
+    securityAnswer: String,   
     date: { type: Date, default: Date.now }
 });
 const User = mongoose.model('User', userSchema);
@@ -194,9 +184,6 @@ app.post('/api/users/register', async (req, res) => {
     try {
         const existingPhone = await User.findOne({ phone: req.body.phone });
         if (existingPhone) return res.status(400).json({ error: "Phone number is already registered." });
-        
-        const existingEmail = await User.findOne({ email: req.body.email });
-        if (existingEmail) return res.status(400).json({ error: "Email is already registered." });
 
         const newUser = new User(req.body);
         await newUser.save();
@@ -217,45 +204,28 @@ app.get('/api/users', async (req, res) => {
     catch (err) { res.status(500).json({ error: "Failed to fetch users." }); }
 });
 
-// --- FORGOT PASSWORD ROUTES ---
+// 🟢 NEW: SECURITY QUESTION PASSWORD RESET ROUTES
 app.post('/api/users/forgot-password', async (req, res) => {
     try {
-        const user = await User.findOne({ email: req.body.email });
-        if (!user) return res.status(400).json({ error: "Email not found in our system." });
+        const user = await User.findOne({ phone: req.body.phone });
+        if (!user) return res.status(400).json({ error: "Phone number not found." });
+        if (!user.securityQuestion) return res.status(400).json({ error: "No security question set up for this account. Contact support." });
 
-        const otp = Math.floor(100000 + Math.random() * 900000).toString();
-        
-        user.resetOTP = otp;
-        user.otpExpiry = Date.now() + 10 * 60 * 1000; 
-        await user.save();
-
-        const mailOptions = {
-            from: `"SyriaCare Support" <${process.env.EMAIL_USER}>`,
-            to: user.email,
-            subject: 'SyriaCare Express - Password Reset Code',
-            text: `Hi ${user.name},\n\nYour password reset code is: ${otp}\n\nThis code will expire in 10 minutes. If you did not request this, please ignore this email.`
-        };
-
-        await transporter.sendMail(mailOptions);
-        res.json({ success: true, message: "OTP sent to your email!" });
-    } catch (err) {
-        console.error("Email Error:", err);
-        res.status(500).json({ error: "Failed to send email. Check server configuration." });
-    }
+        res.json({ success: true, question: user.securityQuestion });
+    } catch (err) { res.status(500).json({ error: "Server error." }); }
 });
 
 app.post('/api/users/reset-password', async (req, res) => {
     try {
-        const { email, otp, newPassword } = req.body;
-        const user = await User.findOne({ email });
+        const { phone, answer, newPassword } = req.body;
+        const user = await User.findOne({ phone });
 
-        if (!user || user.resetOTP !== otp || user.otpExpiry < Date.now()) {
-            return res.status(400).json({ error: "Invalid or expired OTP code." });
+        // Convert both to lowercase so it ignores capitalization
+        if (!user || !user.securityAnswer || user.securityAnswer.toLowerCase() !== answer.toLowerCase().trim()) {
+            return res.status(400).json({ error: "Incorrect answer to the security question." });
         }
 
         user.password = newPassword;
-        user.resetOTP = undefined;
-        user.otpExpiry = undefined;
         await user.save();
 
         res.json({ success: true, message: "Password reset successfully!" });
@@ -263,8 +233,6 @@ app.post('/api/users/reset-password', async (req, res) => {
 });
 
 // --- PROMO CODE ROUTES ---
-
-// 1. Apply Promo Code (Frontend Cart)
 app.post('/api/promo/apply', async (req, res) => {
     try {
         const { code } = req.body;
@@ -284,7 +252,6 @@ app.post('/api/promo/apply', async (req, res) => {
     }
 });
 
-// 2. Get All Promo Codes (Admin Panel)
 app.get('/api/promo', async (req, res) => {
     try {
         const promos = await Promo.find().sort({ _id: -1 });
@@ -294,7 +261,6 @@ app.get('/api/promo', async (req, res) => {
     }
 });
 
-// 3. Create Promo Code (Admin Panel)
 app.post('/api/promo', async (req, res) => {
     try {
         const { code, discountPercentage } = req.body;
@@ -309,7 +275,6 @@ app.post('/api/promo', async (req, res) => {
     }
 });
 
-// 4. Delete Promo Code (Admin Panel)
 app.delete('/api/promo/:id', async (req, res) => {
     try {
         await Promo.findByIdAndDelete(req.params.id);
