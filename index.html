@@ -122,8 +122,8 @@
     .form-group { margin-bottom: 15px; text-align: start; }
     .form-group label { display: block; margin-bottom: 6px; font-weight: 800; font-size: 0.85rem; color: #555;}
     
-    .form-group input, .form-group textarea { width: 100%; padding: 12px; border: 2px solid #eee; border-radius: 8px; box-sizing: border-box; font-family: inherit; transition: 0.2s; outline: none; background: #fafafa; font-weight: 600;}
-    .form-group input:focus, .form-group textarea:focus { border-color: var(--primary); background: white;}
+    .form-group input, .form-group textarea, .form-group select { width: 100%; padding: 12px; border: 2px solid #eee; border-radius: 8px; box-sizing: border-box; font-family: inherit; transition: 0.2s; outline: none; background: #fafafa; font-weight: 600;}
+    .form-group input:focus, .form-group textarea:focus, .form-group select:focus { border-color: var(--primary); background: white;}
     .form-group textarea { resize: vertical; min-height: 80px; }
 
     .loader { border: 4px solid rgba(0,0,0,0.05); border-left-color: var(--primary); border-radius: 50%; width: 35px; height: 35px; animation: spin 1s linear infinite; margin: 0 auto; }
@@ -299,12 +299,12 @@
             
             <form id="forgot-step-1" onsubmit="handleForgotPassword(event)">
                 <div id="forgot-error-1" style="color: #e74c3c; font-size: 0.85rem; font-weight: bold; margin-bottom: 10px; display: none; background: #fce4e4; padding: 10px; border-radius: 8px;"></div>
-                <p style="font-size: 0.9rem; margin-bottom: 15px;" data-en="Enter your registered email address to receive a 6-digit reset code." data-ar="أدخل عنوان بريدك الإلكتروني المسجل لتلقي رمز إعادة التعيين المكون من 6 أرقام.">Enter your registered email address to receive a 6-digit reset code.</p>
+                <p style="font-size: 0.9rem; margin-bottom: 15px;" data-en="Enter your registered phone number to answer your security question." data-ar="أدخل رقم هاتفك المسجل للإجابة على سؤال الأمان.">Enter your registered phone number to answer your security question.</p>
                 <div class="form-group">
-                    <label data-en="Email Address" data-ar="البريد الإلكتروني">Email Address</label>
-                    <input type="email" id="forgot-email" required placeholder="example@gmail.com">
+                    <label data-en="Phone Number" data-ar="رقم الهاتف">Phone Number</label>
+                    <input type="tel" id="forgot-phone" required placeholder="Ex: 0933123456">
                 </div>
-                <button type="submit" class="btn-primary" data-en="Send Code" data-ar="إرسال الرمز">Send Code</button>
+                <button type="submit" class="btn-primary" data-en="Continue" data-ar="متابعة">Continue</button>
                 <div style="text-align: center; margin-top: 15px;">
                     <a href="#" onclick="switchModals('forgot-modal', 'login-modal')" style="color: #666; font-size: 0.85rem; font-weight: bold; text-decoration: none;" data-en="Back to Login" data-ar="العودة لتسجيل الدخول">Back to Login</a>
                 </div>
@@ -312,10 +312,15 @@
 
             <form id="forgot-step-2" onsubmit="handleResetPassword(event)" style="display: none;">
                 <div id="forgot-error-2" style="color: #e74c3c; font-size: 0.85rem; font-weight: bold; margin-bottom: 10px; display: none; background: #fce4e4; padding: 10px; border-radius: 8px;"></div>
-                <p style="font-size: 0.9rem; margin-bottom: 15px; color: var(--secondary); font-weight: bold;" data-en="Code sent! Please check your email inbox." data-ar="تم إرسال الرمز! يرجى التحقق من صندوق البريد الخاص بك.">Code sent! Please check your email inbox.</p>
+                
+                <div class="form-group" style="background: #f4edf9; padding: 15px; border-radius: 8px; border: 1px solid #eaddf4; margin-bottom: 15px;">
+                    <label data-en="Security Question" data-ar="سؤال الأمان" style="color: var(--secondary);">Security Question</label>
+                    <p id="display-security-question" style="font-weight: 900; font-size: 1.05rem; margin-top: 5px; margin-bottom: 0; color: var(--primary);"></p>
+                </div>
+                
                 <div class="form-group">
-                    <label data-en="6-Digit OTP Code" data-ar="رمز التحقق المكون من 6 أرقام">6-Digit OTP Code</label>
-                    <input type="text" id="reset-otp" required maxlength="6" style="letter-spacing: 5px; font-size: 1.2rem; text-align: center; font-weight: 900;">
+                    <label data-en="Your Answer" data-ar="إجابتك">Your Answer</label>
+                    <input type="text" id="security-answer" required>
                 </div>
                 <div class="form-group">
                     <label data-en="New Password" data-ar="كلمة المرور الجديدة">New Password</label>
@@ -345,24 +350,37 @@
                         <input type="text" id="reg-surname" required>
                     </div>
                 </div>
+                
                 <div class="form-group">
                     <label data-en="Phone Number (9-10 digits)" data-ar="رقم الهاتف (9-10 أرقام)">Phone Number (9-10 digits)</label>
                     <input type="tel" id="reg-phone" required placeholder="Ex: 0933123456">
                 </div>
                 
                 <div class="form-group">
-                    <label data-en="Email Address" data-ar="البريد الإلكتروني">Email Address</label>
-                    <input type="email" id="reg-email" required placeholder="example@gmail.com">
-                </div>
-
-                <div class="form-group">
                     <label data-en="Full Delivery Address" data-ar="عنوان التوصيل بالكامل">Full Delivery Address</label>
                     <textarea id="reg-address" required placeholder="City, Neighborhood, Street, Building..."></textarea>
                 </div>
+                
                 <div class="form-group">
                     <label data-en="Password" data-ar="كلمة المرور">Password</label>
                     <input type="password" id="reg-password" required>
                 </div>
+
+                <hr style="border: none; border-top: 1px dashed #ccc; margin: 20px 0;">
+
+                <div class="form-group">
+                    <label data-en="Security Question (For Password Reset)" data-ar="سؤال الأمان (لإعادة تعيين كلمة المرور)">Security Question (For Password Reset)</label>
+                    <select id="reg-question" required>
+                        <option value="What is your mother's maiden name?" data-en="What is your mother's maiden name?" data-ar="ما هو اسم عائلة والدتك قبل الزواج؟">What is your mother's maiden name?</option>
+                        <option value="What was the name of your first pet?" data-en="What was the name of your first pet?" data-ar="ما هو اسم حيوانك الأليف الأول؟">What was the name of your first pet?</option>
+                        <option value="What city were you born in?" data-en="when is your birthday?" data-ar="تاريخ ميلادك؟">What city were you born in?</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label data-en="Security Answer" data-ar="إجابة الأمان">Security Answer</label>
+                    <input type="text" id="reg-answer" required>
+                </div>
+
                 <button type="submit" class="btn-primary" data-en="Join Now" data-ar="انضم الآن">Join Now</button>
                 <button type="button" class="btn-outline" onclick="switchModals('register-modal', 'login-modal')" data-en="Sign In Instead" data-ar="تسجيل الدخول بدلاً من ذلك">Sign In Instead</button>
             </form>
@@ -501,7 +519,12 @@
             if (menu) menu.style.display = 'none';
             
             document.querySelectorAll('[data-en]').forEach(el => {
-                el.innerText = el.getAttribute(`data-${lang}`);
+                // For select options, keep the value intact but change the displayed text
+                if(el.tagName.toLowerCase() === 'option') {
+                    el.innerText = el.getAttribute(`data-${lang}`);
+                } else {
+                    el.innerText = el.getAttribute(`data-${lang}`);
+                }
             });
             
             const searchInput = document.getElementById('search-input');
@@ -539,7 +562,7 @@
             }
         }
 
-        // 🟢 RESTORED: Registration includes Email field
+        // 🟢 NEW: Registration handles Security Questions
         async function handleRegister(e) {
             e.preventDefault();
             const errorDiv = document.getElementById('reg-error');
@@ -550,9 +573,10 @@
                 const name = document.getElementById('reg-name').value.trim();
                 const surname = document.getElementById('reg-surname').value.trim();
                 const phone = document.getElementById('reg-phone').value.trim();
-                const email = document.getElementById('reg-email').value.trim(); // 🟢 NEW EMAIL
                 const address = document.getElementById('reg-address').value.trim();
                 const password = document.getElementById('reg-password').value;
+                const question = document.getElementById('reg-question').value;
+                const answer = document.getElementById('reg-answer').value.trim();
 
                 const phoneRegex = /^\d{9,10}$/;
                 if (!phoneRegex.test(phone)) {
@@ -565,9 +589,10 @@
                 submitBtn.disabled = true;
                 submitBtn.innerText = currentLang === 'ar' ? 'جاري التحميل...' : 'Loading...';
 
+                // Send the new fields to the backend
                 const response = await fetch(`${API}/users/register`, {
                     method: 'POST', headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ name, surname, phone, email, address, password })
+                    body: JSON.stringify({ name, surname, phone, address, password, securityQuestion: question, securityAnswer: answer })
                 });
 
                 const data = await response.json();
@@ -639,28 +664,30 @@
             }
         }
 
-        // 🟢 RESTORED: Forgot Password API Calls
+        // 🟢 NEW: Handles Step 1 of Password Reset (Asking for phone)
         async function handleForgotPassword(e) {
             e.preventDefault();
             const errorDiv = document.getElementById('forgot-error-1');
             errorDiv.style.display = 'none';
             const btn = e.target.querySelector('button[type="submit"]');
-            const email = document.getElementById('forgot-email').value.trim();
+            const phone = document.getElementById('forgot-phone').value.trim();
 
             btn.disabled = true;
-            btn.innerText = currentLang === 'ar' ? 'جاري الإرسال...' : 'Sending...';
+            btn.innerText = currentLang === 'ar' ? 'جاري التحقق...' : 'Checking...';
 
             try {
                 const response = await fetch(`${API}/users/forgot-password`, {
                     method: 'POST', headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email })
+                    body: JSON.stringify({ phone })
                 });
                 const data = await response.json();
 
                 if (!response.ok) {
-                    errorDiv.innerText = `❌ ${data.error || 'Failed to send.'}`;
+                    errorDiv.innerText = `❌ ${data.error || 'Failed to find account.'}`;
                     errorDiv.style.display = 'block';
                 } else {
+                    // Show the security question to the user
+                    document.getElementById('display-security-question').innerText = data.question;
                     document.getElementById('forgot-step-1').style.display = 'none';
                     document.getElementById('forgot-step-2').style.display = 'block';
                 }
@@ -669,17 +696,19 @@
                 errorDiv.style.display = 'block';
             } finally {
                 btn.disabled = false;
-                btn.innerText = currentLang === 'ar' ? 'إرسال الرمز' : 'Send Code';
+                btn.innerText = currentLang === 'ar' ? 'متابعة' : 'Continue';
             }
         }
 
+        // 🟢 NEW: Handles Step 2 of Password Reset (Validating answer & changing password)
         async function handleResetPassword(e) {
             e.preventDefault();
             const errorDiv = document.getElementById('forgot-error-2');
             errorDiv.style.display = 'none';
             const btn = e.target.querySelector('button[type="submit"]');
-            const email = document.getElementById('forgot-email').value.trim();
-            const otp = document.getElementById('reset-otp').value.trim();
+            
+            const phone = document.getElementById('forgot-phone').value.trim();
+            const answer = document.getElementById('security-answer').value.trim();
             const newPassword = document.getElementById('reset-new-password').value;
 
             btn.disabled = true;
@@ -688,7 +717,7 @@
             try {
                 const response = await fetch(`${API}/users/reset-password`, {
                     method: 'POST', headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email, otp, newPassword })
+                    body: JSON.stringify({ phone, answer, newPassword })
                 });
                 const data = await response.json();
 
@@ -703,6 +732,7 @@
                         toast.classList.add("show");
                         setTimeout(() => { toast.classList.remove("show"); }, 3000);
                     }
+                    // Reset forms
                     document.getElementById('forgot-step-1').style.display = 'block';
                     document.getElementById('forgot-step-2').style.display = 'none';
                     document.getElementById('forgot-step-1').reset();
